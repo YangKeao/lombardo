@@ -1,7 +1,10 @@
 [package]
-name = "Storm"
+name = "storm"
 version = "0.1.0"
 authors = ["Yang Keao <keao.yang@yahoo.com>"]
 edition = "2018"
 
 [dependencies]
+failure = "0.1.5"
+nix = "0.13.0"
+tempdir = "0.3.7"
