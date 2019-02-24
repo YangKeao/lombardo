@@ -1,9 +1,14 @@
+use std::sync::Mutex;
+use std::sync::Arc;
 use std::mem::transmute;
 use std::os::unix::net::UnixStream;
 use std::io::Write;
+use std::io::Read;
+use std::thread;
 
 pub struct Display {
-    socket: UnixStream
+    socket: Arc<Mutex<UnixStream>>,
+    listen_thread: std::thread::JoinHandle<()>,
 }
 
 impl Display {
@@ -18,17 +23,30 @@ impl Display {
             path.to_path_buf()
         };
 
+        let socket = Arc::new(Mutex::new(UnixStream::connect(path).unwrap()));
+
+        let c_socket = socket.clone();
+        let listen_thread = thread::spawn(move || {
+            let mut head: [u8; 8] = [0; 8];
+            loop {
+                c_socket.lock().unwrap().read_exact(&mut head).unwrap();
+
+                println!("{:?}", head);
+            }
+        });
+
         Display {
-            socket: UnixStream::connect(path).unwrap()
+            socket,
+            listen_thread,
         }
     }
 
     pub fn disconnect(&self) {
-        self.socket.shutdown(std::net::Shutdown::Both).unwrap();
+        self.socket.lock().unwrap().shutdown(std::net::Shutdown::Both).unwrap();
     }
 
     pub fn get_registry(&mut self) {
         let buffer: (u32, u32, u32) = (1, (12 << 16) + 1, 2);
-        self.socket.write_all(unsafe {&transmute::<(u32, u32, u32), [u8; 12]>(buffer)}).unwrap();
+        self.socket.lock().unwrap().write_all(unsafe {&transmute::<(u32, u32, u32), [u8; 12]>(buffer)}).unwrap();
     }
 }
