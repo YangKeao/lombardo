@@ -8,7 +8,7 @@ use serde_xml_rs::from_str;
 use std::fs;
 
 #[derive(Debug, Deserialize)]
-struct Entry {
+pub struct Entry {
     pub name: String,
     pub value: String,
     pub summary: String,
@@ -16,20 +16,20 @@ struct Entry {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "lowercase")]
-enum EnumChild {
+pub enum EnumChild {
     Description(String),
     Entry(Entry),
 }
 
 #[derive(Debug, Deserialize)]
-struct Enum {
+pub struct Enum {
     pub name: String,
     #[serde(rename = "$value", default)]
     pub items: Vec<EnumChild>
 }
 
 #[derive(Debug, Deserialize)]
-struct Arg {
+pub struct Arg {
     pub name: String,
 
     #[serde(rename = "type", default)]
@@ -39,13 +39,13 @@ struct Arg {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "lowercase")]
-enum EventOrRequestEvent {
+pub enum EventOrRequestEvent {
     Description(String),
     Arg(Arg)
 }
 
 #[derive(Debug, Deserialize)]
-struct Event {
+pub struct Event {
     pub name: String,
 
     #[serde(rename = "$value", default)]
@@ -53,7 +53,7 @@ struct Event {
 }
 
 #[derive(Debug, Deserialize)]
-struct Request {
+pub struct Request {
     pub name: String,
 
     #[serde(rename = "$value", default)]
@@ -62,7 +62,7 @@ struct Request {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "lowercase")]
-enum InterfaceChild {
+pub enum InterfaceChild {
     Request(Request),
     Description(String),
     Event(Event),
@@ -70,7 +70,7 @@ enum InterfaceChild {
 }
 
 #[derive(Debug, Deserialize)]
-struct Interface {
+pub struct Interface {
     pub name: String,
     pub version: String,
 
@@ -80,23 +80,21 @@ struct Interface {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "lowercase")]
-enum ProtocolChild {
+pub enum ProtocolChild {
     Interface(Interface),
     CopyRight(String),
 }
 
 #[derive(Debug, Deserialize)]
-struct Protocol {
+pub struct Protocol {
     pub name: String,
 
     #[serde(rename = "$value", default)]
     pub items: Vec<ProtocolChild>
 }
 
-fn main() {
-    let contents = fs::read_to_string("wayland.xml").expect("Something went wrong reading the wayland.xml");
+pub fn parse_wayland_protocol() -> Protocol {
+    let contents = include_str!("../wayland.xml");
 
-    let protocol: Protocol = from_str(&contents).unwrap();
-
-    println!("{:#?}", protocol);
+    from_str(&contents).unwrap()
 }
