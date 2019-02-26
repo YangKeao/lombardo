@@ -4,6 +4,7 @@ extern crate wayland_protocol_scanner;
 use proc_macro::TokenStream;
 use wayland_protocol_scanner::ProtocolChild;
 use wayland_protocol_scanner::InterfaceChild;
+use wayland_protocol_scanner::EventOrRequestEvent;
 
 #[proc_macro]
 pub fn generate_wayland_protocol_code(_item: TokenStream) -> TokenStream {
@@ -23,8 +24,20 @@ pub fn generate_wayland_protocol_code(_item: TokenStream) -> TokenStream {
                         InterfaceChild::Request(req) => {
                             codes = format!(r#"
                             {}
-                            fn {}_() {{}}
+                            fn {}_(
                             "#, codes, req.name);
+                            for child in req.items {
+                                match child {
+                                    EventOrRequestEvent::Arg(arg) => {
+                                        codes = format!("{}{}: {}",codes, arg.name, arg.name);
+                                    }
+                                    _ => {}
+                                }
+                            }
+                            codes = format!(r#"
+                            {}
+                            ) {{}}
+                            "#, codes);
                             // println!("{}", codes);
                         }
                         InterfaceChild::Event(ev) => {
