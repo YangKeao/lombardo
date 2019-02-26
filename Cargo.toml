@@ -1,2 +1,2 @@
 [workspace]
-members = ["storm", "wayland_protocol_scanner"]
+members = ["storm", "wayland_protocol_scanner", "wayland_protocol_code_generator"]
