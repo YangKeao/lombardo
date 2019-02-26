@@ -1,9 +1,9 @@
-use std::sync::Mutex;
-use std::sync::Arc;
+use std::io::Read;
+use std::io::Write;
 use std::mem::transmute;
 use std::os::unix::net::UnixStream;
-use std::io::Write;
-use std::io::Read;
+use std::sync::Arc;
+use std::sync::Mutex;
 use std::thread;
 
 pub struct Display {
@@ -42,11 +42,19 @@ impl Display {
     }
 
     pub fn disconnect(&self) {
-        self.socket.lock().unwrap().shutdown(std::net::Shutdown::Both).unwrap();
+        self.socket
+            .lock()
+            .unwrap()
+            .shutdown(std::net::Shutdown::Both)
+            .unwrap();
     }
 
     pub fn get_registry(&mut self) {
         let buffer: (u32, u32, u32) = (1, (12 << 16) + 1, 2);
-        self.socket.lock().unwrap().write_all(unsafe {&transmute::<(u32, u32, u32), [u8; 12]>(buffer)}).unwrap();
+        self.socket
+            .lock()
+            .unwrap()
+            .write_all(unsafe { &transmute::<(u32, u32, u32), [u8; 12]>(buffer) })
+            .unwrap();
     }
 }

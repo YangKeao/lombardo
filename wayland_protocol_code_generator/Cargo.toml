@@ -5,6 +5,7 @@ authors = ["Yang Keao <keao.yang@yahoo.com>"]
 edition = "2018"
 
 [dependencies]
+wayland_protocol_scanner = {path = "../wayland_protocol_scanner"}
 
 [lib]
 proc-macro = true

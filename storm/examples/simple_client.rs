@@ -6,7 +6,7 @@ fn main() {
 
     display.get_registry();
 
-    loop {};
+    loop {}
     display.disconnect();
     println!("Disconnected from display");
 }
