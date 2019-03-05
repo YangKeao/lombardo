@@ -3,10 +3,13 @@ name = "storm"
 version = "0.1.0"
 authors = ["Yang Keao <keao.yang@yahoo.com>"]
 edition = "2018"
+build = "build.rs"
 
 [dependencies]
 failure = "0.1.5"
 nix = "0.13.0"
 tempdir = "0.3.7"
-wayland_protocol_code_generator = {path = "../wayland_protocol_code_generator"}
 heck = "0.3.1"
+
+[build-dependencies]
+wayland_protocol_code_generator = {path = "../wayland_protocol_code_generator"}

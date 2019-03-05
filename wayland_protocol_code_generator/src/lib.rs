@@ -12,6 +12,12 @@ pub fn generate_wayland_protocol_code() -> String {
     let protocol = wayland_protocol_scanner::parse_wayland_protocol();
 
     let mut codes = String::from(r#"
+    use super::socket::*;
+    use std::sync::Arc;
+    use std::sync::RwLock;
+    use std::mem::transmute;
+    use std::mem::size_of;
+
     type NewId=u32;
     type Uint=u32;
     type Int=i32;
@@ -31,7 +37,7 @@ pub fn generate_wayland_protocol_code() -> String {
                         InterfaceChild::Request(req) => {
                             codes = format!(r#"
                             {}
-                            fn {}(
+                            fn {}(&self,
                             "#, codes, if req.name == "move" { "mv" } else { &req.name });
                             for child in &req.items {
                                 match child {
@@ -65,7 +71,7 @@ pub fn generate_wayland_protocol_code() -> String {
             ProtocolChild::Interface(interface) => {
                 codes = format!(r#"
                 {}
-                struct {} {{
+                pub struct {} {{
                     object_id: u32,
                     socket: Arc<WaylandSocket>,
                 }}
@@ -124,9 +130,9 @@ pub fn generate_wayland_protocol_code() -> String {
                                 {}
                                 ){{
                                     {}
-                                    self.socket.send(unsafe {{ std::mem::transmute::<&{}{}Request, &[u8]>(&buffer) }});
+                                    self.socket.send(unsafe {{ &transmute::<{}{}Request, [u8; size_of::<{}{}Request>()]>(buffer) }});
                                 }}
-                                "#, codes, implementations, interface.name.to_camel_case(), req.name.to_camel_case());
+                                "#, codes, implementations, interface.name.to_camel_case(), req.name.to_camel_case(), interface.name.to_camel_case(), req.name.to_camel_case());
                             }
                         }
                         InterfaceChild::Event(_ev) => {
