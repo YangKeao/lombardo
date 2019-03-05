@@ -1,66 +1,61 @@
 extern crate proc_macro;
 extern crate wayland_protocol_scanner;
 extern crate heck;
+#[macro_use]
 extern crate quote;
 
 use wayland_protocol_scanner::ProtocolChild;
 use wayland_protocol_scanner::InterfaceChild;
 use wayland_protocol_scanner::EventOrRequestEvent;
 use heck::CamelCase;
+use proc_macro2::{Ident, Span};
 
 pub fn generate_wayland_protocol_code() -> String {
     let protocol = wayland_protocol_scanner::parse_wayland_protocol();
 
-    let mut codes = String::from(r#"
-    use super::socket::*;
-    use std::sync::Arc;
-    use std::sync::RwLock;
-    use std::mem::transmute;
-    use std::mem::size_of;
+    let mut code = quote! {
+        use super::socket::*;
+        use std::sync::Arc;
+        use std::mem::transmute;
+        use std::mem::size_of;
 
-    type NewId=u32;
-    type Uint=u32;
-    type Int=i32;
-    type Fd=i32;
-    type Object=u32;
-    "#);
+        type NewId=u32;
+        type Uint=u32;
+        type Int=i32;
+        type Fd=i32;
+        type Object=u32;
+    };
     for item in &protocol.items {
         match item {
             ProtocolChild::Interface(interface) => {
-                codes = format!(r#"
-                {}
-                trait {} {{
-                "#, codes, interface.name);
-
-                for msg in &interface.items {
+                let functions = interface.items.iter().map(|msg| {
                     match msg {
                         InterfaceChild::Request(req) => {
-                            codes = format!(r#"
-                            {}
-                            fn {}(&self,
-                            "#, codes, if req.name == "move" { "mv" } else { &req.name });
-                            for child in &req.items {
+                            let args = req.items.iter().filter_map(|child| {
                                 match child {
                                     EventOrRequestEvent::Arg(arg) => {
-                                        codes = format!("{}{}: {},", codes, arg.name, arg.typ.to_camel_case());
+                                        let arg_name = Ident::new(&arg.name, Span::call_site());
+                                        let arg_typ = Ident::new(&arg.typ.to_camel_case(), Span::call_site());
+                                        Some(quote! {#arg_name: #arg_typ})
                                     }
-                                    _ => {}
+                                    _ => { None }
                                 }
-                            }
-                            codes = format!(r#"
-                            {}
-                            );
-                            "#, codes);
+                            });
+                            let function_name = Ident::new(if req.name == "move" { "mv" } else { &req.name }, Span::call_site());
+                            return quote! {fn #function_name(&self, #(#args),*);};
                         }
-                        InterfaceChild::Event(_ev) => {
-                            // Todo: Set Event
-                        }
-                        InterfaceChild::Enum(_en) => {}
-                        _ => {}
+                        InterfaceChild::Event(_ev) => { quote! {} }
+                        InterfaceChild::Enum(_en) => { quote! {} }
+                        _ => { quote! {} }
                     }
-                }
-
-                codes = format!("{} }}", codes);
+                });
+                let interface_name = Ident::new(&format!("I{}", interface.name.to_camel_case()), Span::call_site());
+                code = quote! {
+                    #code
+                    trait #interface_name {
+                        #(#functions)*
+                    }
+                };
             }
             _ => {}
         }
@@ -69,85 +64,89 @@ pub fn generate_wayland_protocol_code() -> String {
     for item in &protocol.items {
         match item {
             ProtocolChild::Interface(interface) => {
-                codes = format!(r#"
-                {}
-                pub struct {} {{
-                    object_id: u32,
-                    socket: Arc<WaylandSocket>,
-                }}
-                impl {} for {} {{
-                "#, codes, interface.name.to_camel_case(), interface.name, interface.name.to_camel_case());
-
-                for msg in &interface.items {
+                let struct_name = Ident::new(&interface.name.to_camel_case(), Span::call_site());
+                let interface_name = Ident::new(&format!("I{}", interface.name.to_camel_case()), Span::call_site());
+                let pre_structs = interface.items.iter().filter_map(|msg| {
                     match msg {
                         InterfaceChild::Request(req) => {
-                            {
-                                let mut structs = String::from(format!(r#"
+                            let fields = req.items.iter().filter_map(|child| {
+                                match child {
+                                    EventOrRequestEvent::Arg(arg) => {
+                                        let arg_name = Ident::new(&arg.name, Span::call_site());
+                                        let arg_type = Ident::new(&arg.typ.to_camel_case(), Span::call_site());
+                                        Some(quote! {#arg_name: #arg_type})
+                                    }
+                                    _ => { None }
+                                }
+                            });
+                            let pre_struct_name = Ident::new(&format!("{}{}Request", struct_name, req.name.to_camel_case()), Span::call_site());
+
+                            Some(quote! {
                                 #[repr(packed)]
-                                struct {}{}Request {{
-                                "#, interface.name.to_camel_case(), req.name.to_camel_case()));
-                                for child in &req.items {
-                                    match child {
-                                        EventOrRequestEvent::Arg(arg) => {
-                                            structs = format!("{}{}: {},", structs, arg.name, arg.typ.to_camel_case());
-                                        }
-                                        _ => {}
-                                    }
+                                struct #pre_struct_name {
+                                    #(#[allow(dead_code)]#fields),*
                                 }
-                                structs = format!("{} }}", structs);
-                                codes = format!("{}{}", structs, codes);
-                            }
-
-                            {
-                                codes = format!(r#"
-                                {}
-                                fn {}(&self,
-                                "#, codes, if req.name == "move" { "mv" } else { &req.name });
-                                for child in &req.items {
-                                    match child {
-                                        EventOrRequestEvent::Arg(arg) => {
-                                            codes = format!("{}{}: {},", codes, arg.name, arg.typ.to_camel_case());
-                                        }
-                                        _ => {}
-                                    }
-                                }
-                            }
-
-                            {
-                                let mut implementations = String::from(format!(r#"
-                                    let buffer = {}{}Request {{
-                                "#, interface.name.to_camel_case(), req.name.to_camel_case()));
-                                for child in &req.items {
-                                    match child {
-                                        EventOrRequestEvent::Arg(arg) => {
-                                            implementations = format!("{} {}:{}, ", implementations, arg.name, arg.name);
-                                        }
-                                        _ => {}
-                                    }
-                                }
-                                implementations = format!("{} }};", implementations);
-                                codes = format!(r#"
-                                {}
-                                ){{
-                                    {}
-                                    self.socket.send(unsafe {{ &transmute::<{}{}Request, [u8; size_of::<{}{}Request>()]>(buffer) }});
-                                }}
-                                "#, codes, implementations, interface.name.to_camel_case(), req.name.to_camel_case(), interface.name.to_camel_case(), req.name.to_camel_case());
-                            }
+                            })
                         }
-                        InterfaceChild::Event(_ev) => {
-                            // Todo: Set Event
-                        }
-                        InterfaceChild::Enum(_en) => {}
-                        _ => {}
+                        _ => {None}
                     }
-                }
+                });
+                let functions = interface.items.iter().filter_map(|msg| {
+                    match msg {
+                        InterfaceChild::Request(req) => {
+                            let pre_struct_name = Ident::new(&format!("{}{}Request", struct_name, req.name.to_camel_case()), Span::call_site());
 
-                codes = format!("{} }}", codes);
+                            let args = req.items.iter().filter_map(|child| {
+                                match child {
+                                    EventOrRequestEvent::Arg(arg) => {
+                                        let arg_name = Ident::new(&arg.name, Span::call_site());
+                                        let arg_typ = Ident::new(&arg.typ.to_camel_case(), Span::call_site());
+                                        Some(quote! {#arg_name: #arg_typ})
+                                    }
+                                    _ => { None }
+                                }
+                            });
+                            let function_name =  Ident::new(if req.name == "move" { "mv" } else { &req.name }, Span::call_site());
+                            let set_fields = req.items.iter().filter_map(|child| {
+                                match child {
+                                    EventOrRequestEvent::Arg(arg) => {
+                                        let arg_name = Ident::new(&arg.name, Span::call_site());
+                                        Some(quote! {#arg_name})
+                                    }
+                                    _ => { None }
+                                }
+                            });
+                            Some(quote! {
+                                fn #function_name(&self, #(#args),*) {
+                                    let buffer = #pre_struct_name {
+                                        #(#set_fields),*
+                                    };
+                                    self.socket.send(unsafe { &transmute::<#pre_struct_name, [u8; size_of::<#pre_struct_name>()]>(buffer) });
+                                }
+                            })
+                        }
+                        InterfaceChild::Event(_ev) => { None }
+                        InterfaceChild::Enum(_en) => { None }
+                        _ => { None }
+                    }
+                });
+                code = quote! {
+                    #code
+                    #(#pre_structs)*
+                    pub struct #struct_name {
+                        #[allow(dead_code)]
+                        object_id: u32,
+                        #[allow(dead_code)]
+                        socket: Arc<WaylandSocket>,
+                    }
+                    impl #interface_name for #struct_name {
+                        #(#functions)*
+                    }
+                };
             }
             _ => {}
         }
     }
 
-    return codes;
+    return code.to_string();
 }

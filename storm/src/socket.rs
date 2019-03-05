@@ -2,14 +2,12 @@ use std::sync::Arc;
 use std::sync::RwLock;
 use std::thread;
 use std::os::unix::net::UnixStream;
-use std::mem::transmute;
 use std::io::Write;
 use std::io::Read;
 
-use super::wayland::*;
-
 pub struct WaylandSocket {
     socket: Arc<RwLock<UnixStream>>,
+    #[allow(dead_code)]
     listen_thread: std::thread::JoinHandle<()>,
 }
 

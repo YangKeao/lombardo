@@ -8,3 +8,5 @@ edition = "2018"
 wayland_protocol_scanner = {path = "../wayland_protocol_scanner"}
 heck = "0.3.1"
 quote = "0.6"
+syn = "0.15"
+proc-macro2 = "0.4"
