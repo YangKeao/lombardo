@@ -88,7 +88,7 @@ pub fn generate_wayland_protocol_code() -> String {
                                 }
                             })
                         }
-                        _ => {None}
+                        _ => { None }
                     }
                 });
                 let functions = interface.items.iter().filter_map(|msg| {
@@ -106,7 +106,7 @@ pub fn generate_wayland_protocol_code() -> String {
                                     _ => { None }
                                 }
                             });
-                            let function_name =  Ident::new(if req.name == "move" { "mv" } else { &req.name }, Span::call_site());
+                            let function_name = Ident::new(if req.name == "move" { "mv" } else { &req.name }, Span::call_site());
                             let set_fields = req.items.iter().filter_map(|child| {
                                 match child {
                                     EventOrRequestEvent::Arg(arg) => {

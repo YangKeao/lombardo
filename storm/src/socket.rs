@@ -1,9 +1,9 @@
+use std::io::Read;
+use std::io::Write;
+use std::os::unix::net::UnixStream;
 use std::sync::Arc;
 use std::sync::RwLock;
 use std::thread;
-use std::os::unix::net::UnixStream;
-use std::io::Write;
-use std::io::Read;
 
 pub struct WaylandSocket {
     socket: Arc<RwLock<UnixStream>>,
