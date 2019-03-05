@@ -1,18 +1,20 @@
-use std::io::Read;
-use std::io::Write;
-use std::mem::transmute;
-use std::os::unix::net::UnixStream;
 use std::sync::Arc;
-use std::sync::Mutex;
+use std::sync::RwLock;
 use std::thread;
+use std::os::unix::net::UnixStream;
+use std::mem::transmute;
+use std::io::Write;
+use std::io::Read;
 
-pub struct Display {
-    socket: Arc<Mutex<UnixStream>>,
+use super::wayland::*;
+
+pub struct WaylandSocket {
+    socket: Arc<RwLock<UnixStream>>,
     listen_thread: std::thread::JoinHandle<()>,
 }
 
-impl Display {
-    pub fn connect(name: Option<&str>) -> Display {
+impl WaylandSocket {
+    pub fn connect(name: Option<&str>) -> WaylandSocket {
         let default_name = std::env::var("WAYLAND_DISPLAY").unwrap_or("wayland-0".to_string());
         let name = name.unwrap_or(&default_name);
 
@@ -23,19 +25,19 @@ impl Display {
             path.to_path_buf()
         };
 
-        let socket = Arc::new(Mutex::new(UnixStream::connect(path).unwrap()));
+        let socket = Arc::new(RwLock::new(UnixStream::connect(path).unwrap()));
 
         let c_socket = socket.clone();
         let listen_thread = thread::spawn(move || {
             let mut head: [u8; 8] = [0; 8];
             loop {
-                c_socket.lock().unwrap().read_exact(&mut head).unwrap();
+                c_socket.write().unwrap().read_exact(&mut head).unwrap();
 
                 println!("{:?}", head);
             }
         });
 
-        Display {
+        WaylandSocket {
             socket,
             listen_thread,
         }
@@ -43,18 +45,13 @@ impl Display {
 
     pub fn disconnect(&self) {
         self.socket
-            .lock()
+            .read()
             .unwrap()
             .shutdown(std::net::Shutdown::Both)
             .unwrap();
     }
 
-    pub fn get_registry(&mut self) {
-        let buffer: (u32, u32, u32) = (1, (12 << 16) + 1, 2);
-        self.socket
-            .lock()
-            .unwrap()
-            .write_all(unsafe { &transmute::<(u32, u32, u32), [u8; 12]>(buffer) })
-            .unwrap();
+    pub fn send(&self, buffer: &[u8]) {
+        self.socket.write().unwrap().write_all(buffer).unwrap();
     }
 }

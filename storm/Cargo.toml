@@ -9,3 +9,4 @@ failure = "0.1.5"
 nix = "0.13.0"
 tempdir = "0.3.7"
 wayland_protocol_code_generator = {path = "../wayland_protocol_code_generator"}
+heck = "0.3.1"

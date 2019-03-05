@@ -1,15 +1,14 @@
 extern crate proc_macro;
 extern crate wayland_protocol_scanner;
 extern crate heck;
+extern crate quote;
 
-use proc_macro::TokenStream;
 use wayland_protocol_scanner::ProtocolChild;
 use wayland_protocol_scanner::InterfaceChild;
 use wayland_protocol_scanner::EventOrRequestEvent;
 use heck::CamelCase;
 
-#[proc_macro]
-pub fn generate_wayland_protocol_code(_item: TokenStream) -> TokenStream {
+pub fn generate_wayland_protocol_code() -> String {
     let protocol = wayland_protocol_scanner::parse_wayland_protocol();
 
     let mut codes = String::from(r#"
@@ -19,7 +18,7 @@ pub fn generate_wayland_protocol_code(_item: TokenStream) -> TokenStream {
     type Fd=i32;
     type Object=u32;
     "#);
-    for item in protocol.items {
+    for item in &protocol.items {
         match item {
             ProtocolChild::Interface(interface) => {
                 codes = format!(r#"
@@ -27,36 +26,30 @@ pub fn generate_wayland_protocol_code(_item: TokenStream) -> TokenStream {
                 trait {} {{
                 "#, codes, interface.name);
 
-                for msg in interface.items {
+                for msg in &interface.items {
                     match msg {
                         InterfaceChild::Request(req) => {
                             codes = format!(r#"
                             {}
                             fn {}(
-                            "#, codes, if req.name == "move" {"mv"} else {&req.name});
-                            for child in req.items {
+                            "#, codes, if req.name == "move" { "mv" } else { &req.name });
+                            for child in &req.items {
                                 match child {
                                     EventOrRequestEvent::Arg(arg) => {
-                                        codes = format!("{}{}: {},",codes, arg.name, arg.typ.to_camel_case());
+                                        codes = format!("{}{}: {},", codes, arg.name, arg.typ.to_camel_case());
                                     }
                                     _ => {}
                                 }
                             }
                             codes = format!(r#"
                             {}
-                            ) {{}}
+                            );
                             "#, codes);
-                            // println!("{}", codes);
                         }
-                        InterfaceChild::Event(ev) => {
-                            codes = format!(r#"
-                            {}
-                            fn {}() {{}}
-                            "#, codes, if ev.name == "move" {"mv"} else {&ev.name});
-                            // println!("{}", codes);
+                        InterfaceChild::Event(_ev) => {
+                            // Todo: Set Event
                         }
-                        InterfaceChild::Enum(en) => {
-                        }
+                        InterfaceChild::Enum(_en) => {}
                         _ => {}
                     }
                 }
@@ -67,6 +60,88 @@ pub fn generate_wayland_protocol_code(_item: TokenStream) -> TokenStream {
         }
     }
 
-    println!("{}", codes);
-    return codes.parse().unwrap();
+    for item in &protocol.items {
+        match item {
+            ProtocolChild::Interface(interface) => {
+                codes = format!(r#"
+                {}
+                struct {} {{
+                    object_id: u32,
+                    socket: Arc<WaylandSocket>,
+                }}
+                impl {} for {} {{
+                "#, codes, interface.name.to_camel_case(), interface.name, interface.name.to_camel_case());
+
+                for msg in &interface.items {
+                    match msg {
+                        InterfaceChild::Request(req) => {
+                            {
+                                let mut structs = String::from(format!(r#"
+                                #[repr(packed)]
+                                struct {}{}Request {{
+                                "#, interface.name.to_camel_case(), req.name.to_camel_case()));
+                                for child in &req.items {
+                                    match child {
+                                        EventOrRequestEvent::Arg(arg) => {
+                                            structs = format!("{}{}: {},", structs, arg.name, arg.typ.to_camel_case());
+                                        }
+                                        _ => {}
+                                    }
+                                }
+                                structs = format!("{} }}", structs);
+                                codes = format!("{}{}", structs, codes);
+                            }
+
+                            {
+                                codes = format!(r#"
+                                {}
+                                fn {}(&self,
+                                "#, codes, if req.name == "move" { "mv" } else { &req.name });
+                                for child in &req.items {
+                                    match child {
+                                        EventOrRequestEvent::Arg(arg) => {
+                                            codes = format!("{}{}: {},", codes, arg.name, arg.typ.to_camel_case());
+                                        }
+                                        _ => {}
+                                    }
+                                }
+                            }
+
+                            {
+                                let mut implementations = String::from(format!(r#"
+                                    let buffer = {}{}Request {{
+                                "#, interface.name.to_camel_case(), req.name.to_camel_case()));
+                                for child in &req.items {
+                                    match child {
+                                        EventOrRequestEvent::Arg(arg) => {
+                                            implementations = format!("{} {}:{}, ", implementations, arg.name, arg.name);
+                                        }
+                                        _ => {}
+                                    }
+                                }
+                                implementations = format!("{} }};", implementations);
+                                codes = format!(r#"
+                                {}
+                                ){{
+                                    {}
+                                    self.socket.send(unsafe {{ std::mem::transmute::<&{}{}Request, &[u8]>(&buffer) }});
+                                }}
+                                "#, codes, implementations, interface.name.to_camel_case(), req.name.to_camel_case());
+                            }
+                        }
+                        InterfaceChild::Event(_ev) => {
+                            // Todo: Set Event
+                        }
+                        InterfaceChild::Enum(_en) => {}
+                        _ => {}
+                    }
+                }
+
+                codes = format!("{} }}", codes);
+            }
+            _ => {}
+        }
+    }
+
+    return codes;
 }
