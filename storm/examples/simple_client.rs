@@ -14,5 +14,7 @@ fn main() {
 
     client.display.get_registry(2);
     loop {}
+    client.disconnect();
+
     println!("Disconnected from display");
 }

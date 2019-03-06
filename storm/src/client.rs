@@ -22,4 +22,8 @@ impl Client {
 
         return client;
     }
+
+    pub fn disconnect(&self) {
+        self.socket.disconnect();
+    }
 }
