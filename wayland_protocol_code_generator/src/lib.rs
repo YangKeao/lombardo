@@ -13,6 +13,7 @@ use proc_macro2::{Ident, Span};
 pub fn generate_wayland_protocol_code() -> String {
     let protocol = wayland_protocol_scanner::parse_wayland_protocol();
 
+    // Required USE
     let mut code = quote! {
         use super::socket::*;
         use std::sync::Arc;
@@ -25,6 +26,8 @@ pub fn generate_wayland_protocol_code() -> String {
         type Fd=i32;
         type Object=u32;
     };
+
+    // Generate Traits
     for item in &protocol.items {
         match item {
             ProtocolChild::Interface(interface) => {
@@ -61,6 +64,7 @@ pub fn generate_wayland_protocol_code() -> String {
         }
     }
 
+    // Generate Request interface structs and functions.
     for item in &protocol.items {
         match item {
             ProtocolChild::Interface(interface) => {
@@ -84,6 +88,10 @@ pub fn generate_wayland_protocol_code() -> String {
                             Some(quote! {
                                 #[repr(packed)]
                                 struct #pre_struct_name {
+                                    #[allow(dead_code)]
+                                    msg_size: u16,
+                                    #[allow(dead_code)]
+                                    op_code: u16,
                                     #(#[allow(dead_code)]#fields),*
                                 }
                             })
@@ -91,6 +99,7 @@ pub fn generate_wayland_protocol_code() -> String {
                         _ => { None }
                     }
                 });
+                let mut req_op_code_count: u16 = 0;
                 let functions = interface.items.iter().filter_map(|msg| {
                     match msg {
                         InterfaceChild::Request(req) => {
@@ -116,9 +125,14 @@ pub fn generate_wayland_protocol_code() -> String {
                                     _ => { None }
                                 }
                             });
+
+                            req_op_code_count += 1;
+                            let op_code = req_op_code_count - 1;
                             Some(quote! {
                                 fn #function_name(&self, #(#args),*) {
                                     let buffer = #pre_struct_name {
+                                        msg_size: size_of::<#pre_struct_name>() as u16,
+                                        op_code: #op_code,
                                         #(#set_fields),*
                                     };
                                     self.socket.send(unsafe { &transmute::<#pre_struct_name, [u8; size_of::<#pre_struct_name>()]>(buffer) });
@@ -147,6 +161,5 @@ pub fn generate_wayland_protocol_code() -> String {
             _ => {}
         }
     }
-
     return code.to_string();
 }
