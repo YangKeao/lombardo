@@ -11,8 +11,9 @@ fn main() {
 
     let mut client = storm::client::Client::connect(None);
     println!("Connected to display");
-
     client.display.get_registry(2);
+    println!("Get Registry at id 2");
+
     loop {}
     client.disconnect();
 
