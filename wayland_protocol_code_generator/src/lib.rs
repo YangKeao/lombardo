@@ -55,7 +55,7 @@ pub fn generate_wayland_protocol_code() -> String {
                 let interface_name = Ident::new(&format!("I{}", interface.name.to_camel_case()), Span::call_site());
                 code = quote! {
                     #code
-                    trait #interface_name {
+                    pub trait #interface_name {
                         #(#functions)*
                     }
                 };
@@ -89,9 +89,11 @@ pub fn generate_wayland_protocol_code() -> String {
                                 #[repr(packed)]
                                 struct #pre_struct_name {
                                     #[allow(dead_code)]
-                                    msg_size: u16,
+                                    sender_id: u32,
                                     #[allow(dead_code)]
                                     op_code: u16,
+                                    #[allow(dead_code)]
+                                    msg_size: u16,
                                     #(#[allow(dead_code)]#fields),*
                                 }
                             })
@@ -131,6 +133,7 @@ pub fn generate_wayland_protocol_code() -> String {
                             Some(quote! {
                                 fn #function_name(&self, #(#args),*) {
                                     let buffer = #pre_struct_name {
+                                        sender_id: self.object_id,
                                         msg_size: size_of::<#pre_struct_name>() as u16,
                                         op_code: #op_code,
                                         #(#set_fields),*
@@ -149,9 +152,9 @@ pub fn generate_wayland_protocol_code() -> String {
                     #(#pre_structs)*
                     pub struct #struct_name {
                         #[allow(dead_code)]
-                        object_id: u32,
+                        pub object_id: u32,
                         #[allow(dead_code)]
-                        socket: Arc<WaylandSocket>,
+                        pub socket: Arc<WaylandSocket>,
                     }
                     impl #interface_name for #struct_name {
                         #(#functions)*

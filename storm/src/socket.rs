@@ -27,12 +27,12 @@ impl WaylandSocket {
 
         let c_socket = socket.clone();
         let listen_thread = thread::spawn(move || {
-            let mut head: [u8; 8] = [0; 8];
-            loop {
-                c_socket.write().unwrap().read_exact(&mut head).unwrap();
-
-                println!("{:?}", head);
-            }
+            //            let mut head: [u8; 8] = [0; 8];
+            //            loop {
+            //                c_socket.write().unwrap().read_exact(&mut head).unwrap();
+            //
+            //                println!("{:?}", head);
+            //            }
         });
 
         WaylandSocket {
@@ -50,6 +50,8 @@ impl WaylandSocket {
     }
 
     pub fn send(&self, buffer: &[u8]) {
+        info!("Send to server {:?}", buffer);
+        //        self.socket.write().unwrap().write_all(buffer).unwrap();
         self.socket.write().unwrap().write_all(buffer).unwrap();
     }
 }

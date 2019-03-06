@@ -1,12 +1,18 @@
 extern crate storm;
+#[macro_use]
+extern crate log;
+extern crate env_logger;
+
+use log::Level;
+use storm::wayland::*;
 
 fn main() {
-    let mut display = storm::socket::Display::connect(None);
+    env_logger::init();
+
+    let mut client = storm::client::Client::connect(None);
     println!("Connected to display");
 
-    display.get_registry();
-
+    client.display.get_registry(2);
     loop {}
-    display.disconnect();
     println!("Disconnected from display");
 }
