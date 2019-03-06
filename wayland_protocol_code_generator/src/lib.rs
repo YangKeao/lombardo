@@ -1,3 +1,5 @@
+#![recursion_limit="128"]
+
 extern crate proc_macro;
 extern crate wayland_protocol_scanner;
 extern crate heck;
@@ -19,12 +21,15 @@ pub fn generate_wayland_protocol_code() -> String {
         use std::sync::Arc;
         use std::mem::transmute;
         use std::mem::size_of;
+        use std::os::unix::net::UnixStream;
 
         type NewId=u32;
         type Uint=u32;
         type Int=i32;
         type Fd=i32;
         type Object=u32;
+        type Fixed=i32; // TODO: handle fixed value
+        type Array=Vec<u32>;
     };
 
     // Generate Traits
@@ -164,5 +169,89 @@ pub fn generate_wayland_protocol_code() -> String {
             _ => {}
         }
     }
+
+    let mut predefine_event_structs = quote!{};
+    for item in protocol.items.iter() {
+        match item {
+            ProtocolChild::Interface(interface) => {
+                for child in interface.items.iter() {
+                    match child {
+                        InterfaceChild::Event(ev) => {
+                            let interface_event_name = Ident::new(&format!("{}{}Event", interface.name.to_camel_case(), ev.name.to_camel_case()), Span::call_site());
+                            let event_fields = ev.items.iter().filter_map(|field| {
+                                match field {
+                                    EventOrRequestEvent::Arg(arg) => {
+                                        let arg_name = Ident::new(&arg.name, Span::call_site());
+                                        let arg_typ = Ident::new(&arg.typ.to_camel_case(), Span::call_site());
+                                        Some(quote! {#arg_name: #arg_typ})
+                                    }
+                                    _ => {None}
+                                }
+                            });
+                            predefine_event_structs = quote! {
+                                #predefine_event_structs
+                                struct #interface_event_name {
+                                    #[allow(dead_code)]
+                                    pub sender_id: u32,
+                                    #(#[allow(dead_code)]#event_fields),*
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+    let interface_event_enums = protocol.items.iter().filter_map(|item| {
+        match item {
+            ProtocolChild::Interface(interface) => {
+                let interface_event_name = Ident::new(&format!("{}Event", interface.name.to_camel_case()), Span::call_site());
+                let interface_event_events = interface.items.iter().filter_map(|child| {
+                    match child {
+                        InterfaceChild::Event(ev) => {
+                            let interface_event_name = Ident::new(&format!("{}{}Event", interface.name.to_camel_case(), ev.name.to_camel_case()), Span::call_site());
+                            Some(quote! {#interface_event_name(#interface_event_name)})
+                        }
+                        _ => {None}
+                    }
+                });
+                Some(quote! {
+                    enum #interface_event_name {
+                        #(#interface_event_events),*
+                    }
+                })
+            }
+            _ => {None}
+        }
+    });
+    let interface_event_names = protocol.items.iter().filter_map(|item| {
+        match item {
+            ProtocolChild::Interface(interface) => {
+                let interface_event_name = Ident::new(&format!("{}Event", interface.name.to_camel_case()), Span::call_site());
+                Some(quote! {
+                    #interface_event_name(#interface_event_name)
+                })
+            }
+            _ => {None}
+        }
+    });
+    code = quote! {
+        #code
+        #predefine_event_structs
+        #(#interface_event_enums)*
+        enum Event {
+            #(#interface_event_names),*
+        }
+        trait ReadEvent {
+            fn read_event(&mut self) ;
+        }
+        impl ReadEvent for UnixStream {
+            fn read_event(&mut self) {
+
+            }
+        }
+    };
     return code.to_string();
 }
