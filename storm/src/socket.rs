@@ -2,13 +2,12 @@ use std::io::Read;
 use std::io::Write;
 use std::os::unix::net::UnixStream;
 use std::sync::Arc;
-use std::sync::RwLock;
+use std::sync::Mutex;
 use std::thread;
 
 pub struct WaylandSocket {
-    socket: Arc<RwLock<UnixStream>>,
-    #[allow(dead_code)]
-    listen_thread: std::thread::JoinHandle<()>,
+    write_stream: Arc<Mutex<UnixStream>>,
+    read_stream: Arc<Mutex<UnixStream>>,
 }
 
 impl WaylandSocket {
@@ -23,27 +22,19 @@ impl WaylandSocket {
             path.to_path_buf()
         };
 
-        let socket = Arc::new(RwLock::new(UnixStream::connect(path).unwrap()));
-
-        let c_socket = socket.clone();
-        let listen_thread = thread::spawn(move || {
-            //            let mut head: [u8; 8] = [0; 8];
-            //            loop {
-            //                c_socket.write().unwrap().read_exact(&mut head).unwrap();
-            //
-            //                println!("{:?}", head);
-            //            }
-        });
+        let stream = UnixStream::connect(path).unwrap();
+        let write_stream = Arc::new(Mutex::new(stream.try_clone().unwrap()));
+        let read_stream = Arc::new(Mutex::new(stream.try_clone().unwrap()));
 
         WaylandSocket {
-            socket,
-            listen_thread,
+            write_stream,
+            read_stream,
         }
     }
 
     pub fn disconnect(&self) {
-        self.socket
-            .read()
+        self.write_stream
+            .lock()
             .unwrap()
             .shutdown(std::net::Shutdown::Both)
             .unwrap();
@@ -52,6 +43,6 @@ impl WaylandSocket {
     pub fn send(&self, buffer: &[u8]) {
         info!("Send to server {:?}", buffer);
         //        self.socket.write().unwrap().write_all(buffer).unwrap();
-        self.socket.write().unwrap().write_all(buffer).unwrap();
+        self.write_stream.lock().unwrap().write_all(buffer).unwrap();
     }
 }

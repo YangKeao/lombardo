@@ -249,7 +249,7 @@ pub fn generate_wayland_protocol_code() -> String {
         }
         impl ReadEvent for UnixStream {
             fn read_event(&mut self) {
-
+                
             }
         }
     };
