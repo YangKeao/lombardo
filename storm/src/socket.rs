@@ -1,3 +1,4 @@
+use super::wayland::ReadEvent;
 use std::io::Read;
 use std::io::Write;
 use std::os::unix::net::UnixStream;
@@ -44,5 +45,9 @@ impl WaylandSocket {
         info!("Send to server {:?}", buffer);
         //        self.socket.write().unwrap().write_all(buffer).unwrap();
         self.write_stream.lock().unwrap().write_all(buffer).unwrap();
+    }
+
+    pub fn read_event(&self) {
+        self.read_stream.lock().unwrap().read_event()
     }
 }

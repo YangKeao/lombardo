@@ -22,6 +22,7 @@ pub fn generate_wayland_protocol_code() -> String {
         use std::mem::transmute;
         use std::mem::size_of;
         use std::os::unix::net::UnixStream;
+        use std::io::Read;
 
         type NewId=u32;
         type Uint=u32;
@@ -244,12 +245,26 @@ pub fn generate_wayland_protocol_code() -> String {
         enum Event {
             #(#interface_event_names),*
         }
-        trait ReadEvent {
+        #[repr(packed)]
+        #[derive(Debug)]
+        struct EventHeader {
+            pub sender_id: u32,
+            pub op_code: u16,
+            pub msg_size: u16,
+        }
+        pub trait ReadEvent {
             fn read_event(&mut self) ;
         }
         impl ReadEvent for UnixStream {
             fn read_event(&mut self) {
-                
+                let mut event_header: [u8; size_of::<EventHeader>()] = [0; size_of::<EventHeader>()];
+                self.read(&mut event_header);
+
+                println!("{:?}", event_header);
+                let event_header = unsafe {
+                    transmute::<[u8; size_of::<EventHeader>()], EventHeader>(event_header)
+                };
+                println!("{:?}", event_header);
             }
         }
     };

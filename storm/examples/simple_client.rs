@@ -4,6 +4,7 @@ extern crate log;
 extern crate env_logger;
 
 use log::Level;
+use std::thread;
 use storm::wayland::*;
 
 fn main() {
