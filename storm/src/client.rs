@@ -1,11 +1,13 @@
 use super::socket::WaylandSocket;
-use super::wayland::WlDisplay;
+use super::wayland::{WlDisplay, WlObject};
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::thread;
 
 pub struct Client {
     socket: Arc<WaylandSocket>,
-    pub display: WlDisplay,
+    pub obj_map: HashMap<u32, Arc<WlObject>>,
+    pub display: Arc<WlObject>,
 }
 
 impl Client {
@@ -18,15 +20,27 @@ impl Client {
             read_socket.read_event()
         });
 
+        let display = Arc::new(WlObject::WlDisplay(WlDisplay {
+            object_id: 1,
+            socket: sub_socket,
+        }));
+        let mut obj_map = HashMap::new();
+        obj_map.insert(1, display.clone());
+
         let client = Client {
             socket,
-            display: WlDisplay {
-                object_id: 1,
-                socket: sub_socket,
-            },
+            obj_map,
+            display,
         };
 
         return client;
+    }
+
+    pub fn get_display(&self) -> &WlDisplay {
+        match &*self.display {
+            WlObject::WlDisplay(display) => &display,
+            _ => panic!("Display is not display type"),
+        }
     }
 
     pub fn disconnect(&self) {

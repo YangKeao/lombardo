@@ -171,6 +171,23 @@ pub fn generate_wayland_protocol_code() -> String {
         }
     }
 
+    let interface_names = protocol.items.iter().filter_map(|item| {
+        match item {
+            ProtocolChild::Interface(interface) => {
+                let interface_name = Ident::new(&format!("{}", interface.name.to_camel_case()), Span::call_site());
+                Some(quote! {#interface_name(#interface_name)})
+            }
+            _ => {None}
+        }
+    });
+    code = quote! {
+        #code
+        pub enum WlObject {
+            #(#interface_names),*
+        }
+    };
+
+    // Generate Event interface structs and functions.
     let mut predefine_event_structs = quote!{};
     for item in protocol.items.iter() {
         match item {
