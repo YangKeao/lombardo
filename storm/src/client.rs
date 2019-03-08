@@ -5,9 +5,10 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::thread;
 
+#[derive(Clone)]
 pub struct Client {
     socket: Arc<WaylandSocket>,
-    pub obj_map: Mutex<HashMap<u32, Arc<WlObject>>>,
+    pub obj_map: Arc<Mutex<HashMap<u32, Arc<WlObject>>>>,
 }
 
 impl Client {
@@ -16,7 +17,7 @@ impl Client {
 
         let client = Client {
             socket,
-            obj_map: Mutex::new(HashMap::new()),
+            obj_map: Arc::new(Mutex::new(HashMap::new())),
         };
         client.bind_obj::<WlDisplay>(1);
         client.start_event_loop();
@@ -25,9 +26,10 @@ impl Client {
     }
 
     pub fn start_event_loop(&self) {
-        let read_socket = self.socket.clone();
+        let this = self.clone();
         thread::spawn(move || loop {
-            let (raw_event_header, msg_body) = read_socket.read_event(); // TODO: Handle Event
+            let (raw_event_header, msg_body) = this.socket.read_event(); // TODO: Handle Event
+            let sender = this.get_obj(raw_event_header.sender_id);
         });
     }
 
