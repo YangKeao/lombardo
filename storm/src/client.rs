@@ -17,7 +17,7 @@ impl Client {
 
         let read_socket = socket.clone();
         thread::spawn(move || loop {
-            read_socket.read_event()
+            read_socket.read_event(); // TODO: Handle Event
         });
 
         let display = Arc::new(WlObject::WlDisplay(WlDisplay {

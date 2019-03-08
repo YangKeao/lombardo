@@ -1,10 +1,9 @@
+use super::wayland::EventHeader;
 use super::wayland::ReadEvent;
-use std::io::Read;
 use std::io::Write;
 use std::os::unix::net::UnixStream;
 use std::sync::Arc;
 use std::sync::Mutex;
-use std::thread;
 
 pub struct WaylandSocket {
     write_stream: Arc<Mutex<UnixStream>>,
@@ -47,7 +46,7 @@ impl WaylandSocket {
         self.write_stream.lock().unwrap().write_all(buffer).unwrap();
     }
 
-    pub fn read_event(&self) {
+    pub fn read_event(&self) -> (EventHeader, std::vec::Vec<u8>) {
         self.read_stream.lock().unwrap().read_event()
     }
 }

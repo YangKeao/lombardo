@@ -3,7 +3,7 @@ extern crate serde_derive;
 extern crate serde;
 extern crate serde_xml_rs;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use serde_xml_rs::from_str;
 use std::fs;
 
@@ -25,7 +25,7 @@ pub enum EnumChild {
 pub struct Enum {
     pub name: String,
     #[serde(rename = "$value", default)]
-    pub items: Vec<EnumChild>
+    pub items: Vec<EnumChild>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -41,7 +41,7 @@ pub struct Arg {
 #[serde(rename_all = "lowercase")]
 pub enum EventOrRequestEvent {
     Description(String),
-    Arg(Arg)
+    Arg(Arg),
 }
 
 #[derive(Debug, Deserialize)]
@@ -49,7 +49,7 @@ pub struct Event {
     pub name: String,
 
     #[serde(rename = "$value", default)]
-    pub items: Vec<EventOrRequestEvent>
+    pub items: Vec<EventOrRequestEvent>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -57,7 +57,7 @@ pub struct Request {
     pub name: String,
 
     #[serde(rename = "$value", default)]
-    pub items: Vec<EventOrRequestEvent>
+    pub items: Vec<EventOrRequestEvent>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -75,7 +75,7 @@ pub struct Interface {
     pub version: String,
 
     #[serde(rename = "$value", default)]
-    pub items: Vec<InterfaceChild>
+    pub items: Vec<InterfaceChild>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -90,7 +90,7 @@ pub struct Protocol {
     pub name: String,
 
     #[serde(rename = "$value", default)]
-    pub items: Vec<ProtocolChild>
+    pub items: Vec<ProtocolChild>,
 }
 
 pub fn parse_wayland_protocol() -> Protocol {
