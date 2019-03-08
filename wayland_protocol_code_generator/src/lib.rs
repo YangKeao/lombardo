@@ -228,7 +228,7 @@ pub fn generate_wayland_protocol_code() -> String {
             );
             Some(quote! {
                 #[allow(dead_code)]
-                fn #get_function_name(&self) -> Option<#interface_name> {
+                pub fn #get_function_name(&self) -> Option<#interface_name> {
                     match self {
                         WlObject::#interface_name(item) => Some(item.clone()),
                         _ => None,

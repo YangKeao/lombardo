@@ -29,11 +29,7 @@ impl Client {
     }
 
     pub fn get_display(&self) -> WlDisplay {
-        let wl_obj = self.get_obj(1);
-        match &*wl_obj {
-            WlObject::WlDisplay(display) => display.clone(),
-            _ => panic!("Object ID 1 is not Display"), // TODO: Handle error in rust way.
-        }
+        self.get_obj(1).try_get_wl_display().unwrap()
     }
 
     pub fn get_obj(&self, obj_id: u32) -> Arc<WlObject> {
