@@ -447,12 +447,12 @@ pub fn generate_wayland_protocol_code() -> String {
                                             parsed_len += str_len;
 
                                             let src_ptr = msg_body[(start + size_of::<u32>())..parsed_len].as_ptr();
-                                            let mut tmp_ptr: *mut u8 = Vec::with_capacity(str_len).as_mut_ptr();
-                                            let mut #arg_name: String = unsafe {
-                                                std::ptr::copy(src_ptr, tmp_ptr, str_len);
-                                                let tmp_ptr = tmp_ptr as *mut i8;
-                                                std::ffi::CString::from_raw(tmp_ptr).into_string().unwrap()
+                                            let mut tmp_ptr = Vec::with_capacity(str_len);
+                                            unsafe {
+                                                tmp_ptr.set_len(str_len);
+                                                std::ptr::copy(src_ptr, tmp_ptr.as_mut_ptr(), str_len);
                                             };
+                                            let #arg_name = std::str::from_utf8(&tmp_ptr).unwrap().to_string();
                                         })
                                     }
                                     "array" => {
