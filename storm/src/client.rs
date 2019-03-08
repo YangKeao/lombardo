@@ -1,5 +1,5 @@
 use super::socket::WaylandSocket;
-use super::wayland::{WlDisplay, WlEnum, WlObject};
+use super::wayland::{WlDisplay, WlObject, WlRawObject};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -29,14 +29,18 @@ impl Client {
     }
 
     pub fn get_display(&self) -> WlDisplay {
-        let wl_obj = self.obj_map.lock().unwrap().get(&1).unwrap().clone();
+        let wl_obj = self.get_obj(1);
         match &*wl_obj {
             WlObject::WlDisplay(display) => display.clone(),
             _ => panic!("Object ID 1 is not Display"), // TODO: Handle error in rust way.
         }
     }
 
-    pub fn bind_obj<T: WlEnum>(&self, obj_id: u32) {
+    pub fn get_obj(&self, obj_id: u32) -> Arc<WlObject> {
+        self.obj_map.lock().unwrap().get(&obj_id).unwrap().clone()
+    }
+
+    pub fn bind_obj<T: WlRawObject>(&self, obj_id: u32) {
         let wl_obj = Arc::new(T::new(obj_id, self.socket.clone()).to_enum());
         self.obj_map.lock().unwrap().insert(obj_id, wl_obj.clone());
     }

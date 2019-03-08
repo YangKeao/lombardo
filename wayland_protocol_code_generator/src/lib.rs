@@ -6,7 +6,7 @@ extern crate wayland_protocol_scanner;
 #[macro_use]
 extern crate quote;
 
-use heck::CamelCase;
+use heck::{CamelCase, SnakeCase};
 use proc_macro2::{Ident, Span};
 use wayland_protocol_scanner::EventOrRequestEvent;
 use wayland_protocol_scanner::InterfaceChild;
@@ -184,16 +184,24 @@ pub fn generate_wayland_protocol_code() -> String {
         }
     }
 
-    let mut struct_to_enum = quote! {};
     let interface_names = protocol.items.iter().filter_map(|item| match item {
         ProtocolChild::Interface(interface) => {
             let interface_name = Ident::new(
                 &format!("{}", interface.name.to_camel_case()),
                 Span::call_site(),
             );
-            struct_to_enum = quote! {
-                #struct_to_enum
-                impl WlEnum for #interface_name {
+            Some(quote! {#interface_name(#interface_name)})
+        }
+        _ => None,
+    });
+    let impl_wl_raw_obj = protocol.items.iter().filter_map(|item| match item {
+        ProtocolChild::Interface(interface) => {
+            let interface_name = Ident::new(
+                &format!("{}", interface.name.to_camel_case()),
+                Span::call_site(),
+            );
+            Some(quote! {
+                impl WlRawObject for #interface_name {
                     fn new(object_id: u32, socket: Arc<WaylandSocket>) -> #interface_name {
                         #interface_name {
                             object_id,
@@ -204,21 +212,45 @@ pub fn generate_wayland_protocol_code() -> String {
                         WlObject::#interface_name(self)
                     }
                 }
-            };
-            Some(quote! {#interface_name(#interface_name)})
+            })
         }
-        _ => None,
+        _ => None
+    });
+    let impl_wl_get_obj = protocol.items.iter().filter_map(|item| match item {
+        ProtocolChild::Interface(interface) => {
+            let interface_name = Ident::new(
+                &format!("{}", interface.name.to_camel_case()),
+                Span::call_site(),
+            );
+            let get_function_name = Ident::new(
+                &format!("try_get_{}", interface.name.to_snake_case()),
+                Span::call_site(),
+            );
+            Some(quote! {
+                #[allow(dead_code)]
+                fn #get_function_name(&self) -> Option<#interface_name> {
+                    match self {
+                        WlObject::#interface_name(item) => Some(item.clone()),
+                        _ => None,
+                    }
+                }
+            })
+        }
+        _ => None
     });
     code = quote! {
         #code
-        pub trait WlEnum {
+        pub trait WlRawObject {
             fn new(object_id: u32, socket: Arc<WaylandSocket>) -> Self;
             fn to_enum(self) -> WlObject ;
         }
         pub enum WlObject {
             #(#interface_names),*
         }
-        #struct_to_enum
+        impl WlObject {
+            #(#impl_wl_get_obj)*
+        }
+        #(#impl_wl_raw_obj)*
     };
 
     // Generate Event interface structs and functions.
