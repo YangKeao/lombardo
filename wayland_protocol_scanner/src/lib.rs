@@ -39,7 +39,7 @@ pub struct Arg {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum EventOrRequestEvent {
+pub enum EventOrRequestField {
     Description(String),
     Arg(Arg),
 }
@@ -49,7 +49,7 @@ pub struct Event {
     pub name: String,
 
     #[serde(rename = "$value", default)]
-    pub items: Vec<EventOrRequestEvent>,
+    pub items: Vec<EventOrRequestField>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -57,7 +57,7 @@ pub struct Request {
     pub name: String,
 
     #[serde(rename = "$value", default)]
-    pub items: Vec<EventOrRequestEvent>,
+    pub items: Vec<EventOrRequestField>,
 }
 
 #[derive(Debug, Deserialize)]

@@ -8,7 +8,7 @@ extern crate quote;
 
 use heck::{CamelCase, SnakeCase};
 use proc_macro2::{Ident, Span};
-use wayland_protocol_scanner::EventOrRequestEvent;
+use wayland_protocol_scanner::EventOrRequestField;
 use wayland_protocol_scanner::InterfaceChild;
 use wayland_protocol_scanner::ProtocolChild;
 
@@ -29,7 +29,7 @@ pub fn generate_wayland_protocol_code() -> String {
         type Int=i32;
         type Fd=i32;
         type Object=u32;
-        type Fixed=i32; // TODO: handle fixed value
+        type Fixed=f32; // TODO: handle fixed value
         type Array=Vec<u32>;
     };
 
@@ -40,7 +40,7 @@ pub fn generate_wayland_protocol_code() -> String {
                 let functions = interface.items.iter().map(|msg| match msg {
                     InterfaceChild::Request(req) => {
                         let args = req.items.iter().filter_map(|child| match child {
-                            EventOrRequestEvent::Arg(arg) => {
+                            EventOrRequestField::Arg(arg) => {
                                 let arg_name = Ident::new(&arg.name, Span::call_site());
                                 let arg_typ =
                                     Ident::new(&arg.typ.to_camel_case(), Span::call_site());
@@ -91,7 +91,7 @@ pub fn generate_wayland_protocol_code() -> String {
                 let pre_structs = interface.items.iter().filter_map(|msg| match msg {
                     InterfaceChild::Request(req) => {
                         let fields = req.items.iter().filter_map(|child| match child {
-                            EventOrRequestEvent::Arg(arg) => {
+                            EventOrRequestField::Arg(arg) => {
                                 let arg_name = Ident::new(&arg.name, Span::call_site());
                                 let arg_type =
                                     Ident::new(&arg.typ.to_camel_case(), Span::call_site());
@@ -127,7 +127,7 @@ pub fn generate_wayland_protocol_code() -> String {
 
                             let args = req.items.iter().filter_map(|child| {
                                 match child {
-                                    EventOrRequestEvent::Arg(arg) => {
+                                    EventOrRequestField::Arg(arg) => {
                                         let arg_name = Ident::new(&arg.name, Span::call_site());
                                         let arg_typ = Ident::new(&arg.typ.to_camel_case(), Span::call_site());
                                         Some(quote! {#arg_name: #arg_typ})
@@ -138,7 +138,7 @@ pub fn generate_wayland_protocol_code() -> String {
                             let function_name = Ident::new(if req.name == "move" { "mv" } else { &req.name }, Span::call_site());
                             let set_fields = req.items.iter().filter_map(|child| {
                                 match child {
-                                    EventOrRequestEvent::Arg(arg) => {
+                                    EventOrRequestField::Arg(arg) => {
                                         let arg_name = Ident::new(&arg.name, Span::call_site());
                                         Some(quote! {#arg_name})
                                     }
@@ -214,7 +214,7 @@ pub fn generate_wayland_protocol_code() -> String {
                 }
             })
         }
-        _ => None
+        _ => None,
     });
     let impl_wl_get_obj = protocol.items.iter().filter_map(|item| match item {
         ProtocolChild::Interface(interface) => {
@@ -236,7 +236,7 @@ pub fn generate_wayland_protocol_code() -> String {
                 }
             })
         }
-        _ => None
+        _ => None,
     });
     code = quote! {
         #code
@@ -270,7 +270,7 @@ pub fn generate_wayland_protocol_code() -> String {
                                 Span::call_site(),
                             );
                             let event_fields = ev.items.iter().filter_map(|field| match field {
-                                EventOrRequestEvent::Arg(arg) => {
+                                EventOrRequestField::Arg(arg) => {
                                     let arg_name = Ident::new(&arg.name, Span::call_site());
                                     let arg_typ =
                                         Ident::new(&arg.typ.to_camel_case(), Span::call_site());
@@ -385,6 +385,130 @@ pub fn generate_wayland_protocol_code() -> String {
                 self.read(&mut msg_body).unwrap(); // TODO: Handle Error
 
                 return (event_header, msg_body);
+            }
+        }
+    };
+
+    let parse_event_for_every_interface = protocol.items.iter().filter_map(|item| match item {
+        ProtocolChild::Interface(interface) => {
+            let interface_name_str = format!("{}", interface.name.to_camel_case());
+            let event_interface_name_str = format!("{}Event", interface.name.to_camel_case());
+            let interface_name = Ident::new(
+                &interface_name_str,
+                Span::call_site(),
+            );
+            let event_interface_name = Ident::new(
+                &event_interface_name_str,
+                Span::call_site(),
+            );
+            let mut op_code: u16 = 0;
+            let parse_event_for_every_op_code = interface.items.iter().filter_map(|child| match child {
+                InterfaceChild::Event(ev) => {
+                    op_code += 1;
+                    let true_op_code =op_code - 1;
+
+                    let ev_name_str = format!("{}{}Event", interface.name.to_camel_case(), ev.name.to_camel_case());
+                    let ev_name = Ident::new(
+                        &ev_name_str,
+                        Span::call_site(),
+                    );
+                    let parse_args = ev.items.iter().filter_map(|field| {
+                        match field {
+                            EventOrRequestField::Arg(arg) => {
+                                let arg_name_str = arg.name.to_snake_case();
+                                let arg_name = Ident::new(
+                                    &arg_name_str,
+                                    Span::call_site(),
+                                );
+                                let arg_typ =
+                                    Ident::new(&arg.typ.to_camel_case(), Span::call_site());
+                                match &arg.typ[..] {
+                                    "fixed" => {
+                                        Some(quote! {
+                                            let #arg_name: f32 = 0.0;
+                                            unimplemented!();
+                                        })
+                                    }
+                                    "string" => {
+                                        Some(quote! {
+                                            let #arg_name = String::new();
+                                            unimplemented!();
+                                        })
+//                                        Some(quote! {
+//                                            let start = parsed_len;
+//                                            let str_len = 0;
+//                                            while msg_body[start + str_len] > 0 {
+//
+//                                            }
+//                                        })
+                                    }
+                                    "array" => {
+                                        Some(quote! {
+                                            let #arg_name: Vec<u32> = Vec::new();
+                                            unimplemented!();
+                                        })
+                                    }
+                                    _ => {
+                                        Some(quote! {
+                                            parsed_len += size_of::<#arg_typ>();
+                                            let start = parsed_len - size_of::<#arg_typ>();
+
+                                            let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const #arg_typ;
+                                            let #arg_name = unsafe{
+                                                *raw_ptr
+                                            };
+                                        })
+                                    }
+                                }
+                            }
+                            _ => None
+                        }
+                    });
+                    let arg_names = ev.items.iter().filter_map(|field| {
+                        match field {
+                            EventOrRequestField::Arg(arg) => {
+                                let arg_name_str = arg.name.to_snake_case();
+                                let arg_name = Ident::new(
+                                    &arg_name_str,
+                                    Span::call_site(),
+                                );
+                                Some(quote! {#arg_name})
+                            }
+                            _ => None
+                        }
+                    });
+                    Some(quote! {
+                        #true_op_code => {
+                            info!("Receive event {}", #ev_name_str); // TODO: parse Event
+                            let mut parsed_len: usize = 0;
+                            #(#parse_args)*
+                            #event_interface_name::#ev_name(#ev_name {
+                                sender_id,
+                                #(#arg_names),*
+                            })
+                        }
+                    })
+                }
+                _ => None
+            });
+            Some(quote! {
+                WlObject::#interface_name(_obj) => {
+                    Event::#event_interface_name(match op_code {
+                        #(#parse_event_for_every_op_code)*
+                        _ => panic!("No such op_code")
+                    })
+                }
+            })
+        }
+        _ => None,
+    });
+    code = quote! {
+        #code
+        impl WlObject {
+            pub fn parse_event(&self, sender_id: u32, op_code: u16, msg_body: Vec<u8>) -> Event {
+                match self {
+                    #(#parse_event_for_every_interface)*
+                }
             }
         }
     };

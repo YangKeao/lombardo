@@ -12,6 +12,7 @@ fn main() {
 
     let mut client = storm::client::Client::connect(None);
     println!("Connected to display");
+    client.bind_obj::<WlRegistry>(2);
     client.get_display().get_registry(2);
     println!("Get Registry at id 2");
 

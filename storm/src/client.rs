@@ -30,6 +30,11 @@ impl Client {
         thread::spawn(move || loop {
             let (raw_event_header, msg_body) = this.socket.read_event(); // TODO: Handle Event
             let sender = this.get_obj(raw_event_header.sender_id);
+            let event = sender.parse_event(
+                raw_event_header.sender_id,
+                raw_event_header.op_code,
+                msg_body,
+            );
         });
     }
 
