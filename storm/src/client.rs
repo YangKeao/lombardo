@@ -1,4 +1,5 @@
 use super::socket::WaylandSocket;
+use super::wayland;
 use super::wayland::{WlDisplay, WlObject, WlRawObject};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -35,6 +36,18 @@ impl Client {
                 raw_event_header.op_code,
                 msg_body,
             );
+            match &event {
+                wayland::Event::WlRegistryEvent(reg_ev) => match reg_ev {
+                    wayland::WlRegistryEvent::WlRegistryGlobalEvent(rm_ev) => {
+                        info!(
+                            "WlRegistryGlobalEvent: Name: {}, Interface: {}",
+                            rm_ev.name, rm_ev.interface
+                        );
+                    }
+                    _ => {}
+                },
+                _ => {}
+            }
         });
     }
 

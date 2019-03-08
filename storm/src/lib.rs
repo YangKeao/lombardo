@@ -1,3 +1,5 @@
+#![feature(str_as_mut_ptr)]
+
 extern crate failure;
 extern crate tempdir;
 #[macro_use]

@@ -1,4 +1,4 @@
-#![recursion_limit = "128"]
+#![recursion_limit = "256"]
 
 extern crate heck;
 extern crate proc_macro;
@@ -283,7 +283,7 @@ pub fn generate_wayland_protocol_code() -> String {
                                 pub struct #interface_event_name {
                                     #[allow(dead_code)]
                                     pub sender_id: u32,
-                                    #(#[allow(dead_code)]#event_fields),*
+                                    #(#[allow(dead_code)]pub #event_fields),*
                                 }
                             }
                         }
@@ -430,17 +430,30 @@ pub fn generate_wayland_protocol_code() -> String {
                                         })
                                     }
                                     "string" => {
-                                        Some(quote! {
-                                            let #arg_name = String::new();
-                                            unimplemented!();
-                                        })
 //                                        Some(quote! {
-//                                            let start = parsed_len;
-//                                            let str_len = 0;
-//                                            while msg_body[start + str_len] > 0 {
-//
-//                                            }
+//                                            let #arg_name = String::new();
+//                                            unimplemented!();
 //                                        })
+                                        Some(quote! {
+                                            parsed_len += size_of::<u32>();
+                                            let start = parsed_len - size_of::<u32>();
+
+                                            let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const u32;
+                                            let str_len = unsafe{
+                                                *raw_ptr
+                                            };
+                                            let str_len = (str_len as f64 / 4.0).ceil() as usize * 4;
+                                            println!("{} {} {:?}", str_len, (start + size_of::<u32>()), msg_body);
+                                            parsed_len += str_len;
+
+                                            let src_ptr = msg_body[(start + size_of::<u32>())..parsed_len].as_ptr();
+                                            let mut tmp_ptr: *mut u8 = Vec::with_capacity(str_len).as_mut_ptr();
+                                            let mut #arg_name: String = unsafe {
+                                                std::ptr::copy(src_ptr, tmp_ptr, str_len);
+                                                let tmp_ptr = tmp_ptr as *mut i8;
+                                                std::ffi::CString::from_raw(tmp_ptr).into_string().unwrap()
+                                            };
+                                        })
                                     }
                                     "array" => {
                                         Some(quote! {
@@ -454,7 +467,7 @@ pub fn generate_wayland_protocol_code() -> String {
                                             let start = parsed_len - size_of::<#arg_typ>();
 
                                             let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const #arg_typ;
-                                            let #arg_name = unsafe{
+                                            let mut #arg_name = unsafe{
                                                 *raw_ptr
                                             };
                                         })
