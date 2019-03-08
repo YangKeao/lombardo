@@ -264,24 +264,51 @@ pub fn generate_wayland_protocol_code() -> String {
         }
         #[repr(packed)]
         #[derive(Debug)]
+        struct EventHeaderPre {
+            pub sender_id: u32,
+            pub msg_size_and_op_code: u32,
+        }
+        #[repr(packed)]
+        #[derive(Debug)]
         struct EventHeader {
             pub sender_id: u32,
-            pub op_code: u16,
             pub msg_size: u16,
+            pub op_code: u16,
+        }
+        impl EventHeaderPre {
+            fn convert_to_event_header(self) -> EventHeader {
+                let msg_size = {
+                    let size = self.msg_size_and_op_code >> 16;
+                    if (size % 4 == 0) {
+                        size as u16
+                    } else {
+                        (size as f64 / 4.0).ceil() as u16 * 4
+                    }
+                } - 8;
+                EventHeader {
+                    sender_id: self.sender_id,
+                    msg_size,
+                    op_code: self.msg_size_and_op_code as u16,
+                }
+            }
         }
         pub trait ReadEvent {
             fn read_event(&mut self) ;
         }
         impl ReadEvent for UnixStream {
             fn read_event(&mut self) {
-                let mut event_header: [u8; size_of::<EventHeader>()] = [0; size_of::<EventHeader>()];
+                let mut event_header: [u8; size_of::<EventHeaderPre>()] = [0; size_of::<EventHeaderPre>()];
                 self.read(&mut event_header);
 
                 println!("{:?}", event_header);
                 let event_header = unsafe {
-                    transmute::<[u8; size_of::<EventHeader>()], EventHeader>(event_header)
+                    transmute::<[u8; size_of::<EventHeaderPre>()], EventHeaderPre>(event_header).convert_to_event_header()
                 };
                 println!("{:?}", event_header);
+
+                let mut msg_body = vec![0; event_header.msg_size as usize];
+                self.read(&mut msg_body);
+                println!("{:?}", msg_body);
             }
         }
     };
