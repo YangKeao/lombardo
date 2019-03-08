@@ -14,18 +14,21 @@ impl Client {
     pub fn connect(name: Option<&str>) -> Client {
         let socket = Arc::new(WaylandSocket::connect(name));
 
-        let read_socket = socket.clone();
-        thread::spawn(move || loop {
-            read_socket.read_event(); // TODO: Handle Event
-        });
-
         let client = Client {
             socket,
             obj_map: Mutex::new(HashMap::new()),
         };
         client.bind_obj::<WlDisplay>(1);
+        client.start_event_loop();
 
         return client;
+    }
+
+    pub fn start_event_loop(&self) {
+        let read_socket = self.socket.clone();
+        thread::spawn(move || loop {
+            let (raw_event_header, msg_body) = read_socket.read_event(); // TODO: Handle Event
+        });
     }
 
     pub fn get_display(&self) -> WlDisplay {
