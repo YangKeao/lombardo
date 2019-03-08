@@ -168,6 +168,7 @@ pub fn generate_wayland_protocol_code() -> String {
                 code = quote! {
                     #code
                     #(#pre_structs)*
+                    #[derive(Clone)]
                     pub struct #struct_name {
                         #[allow(dead_code)]
                         pub object_id: u32,
@@ -183,21 +184,41 @@ pub fn generate_wayland_protocol_code() -> String {
         }
     }
 
+    let mut struct_to_enum = quote! {};
     let interface_names = protocol.items.iter().filter_map(|item| match item {
         ProtocolChild::Interface(interface) => {
             let interface_name = Ident::new(
                 &format!("{}", interface.name.to_camel_case()),
                 Span::call_site(),
             );
+            struct_to_enum = quote! {
+                #struct_to_enum
+                impl WlEnum for #interface_name {
+                    fn new(object_id: u32, socket: Arc<WaylandSocket>) -> #interface_name {
+                        #interface_name {
+                            object_id,
+                            socket,
+                        }
+                    }
+                    fn to_enum(self) -> WlObject {
+                        WlObject::#interface_name(self)
+                    }
+                }
+            };
             Some(quote! {#interface_name(#interface_name)})
         }
         _ => None,
     });
     code = quote! {
         #code
+        pub trait WlEnum {
+            fn new(object_id: u32, socket: Arc<WaylandSocket>) -> Self;
+            fn to_enum(self) -> WlObject ;
+        }
         pub enum WlObject {
             #(#interface_names),*
         }
+        #struct_to_enum
     };
 
     // Generate Event interface structs and functions.

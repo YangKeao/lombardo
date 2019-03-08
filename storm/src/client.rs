@@ -1,46 +1,44 @@
 use super::socket::WaylandSocket;
-use super::wayland::{WlDisplay, WlObject};
+use super::wayland::{WlDisplay, WlEnum, WlObject};
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::sync::Mutex;
 use std::thread;
 
 pub struct Client {
     socket: Arc<WaylandSocket>,
-    pub obj_map: HashMap<u32, Arc<WlObject>>,
-    pub display: Arc<WlObject>,
+    pub obj_map: Mutex<HashMap<u32, Arc<WlObject>>>,
 }
 
 impl Client {
     pub fn connect(name: Option<&str>) -> Client {
         let socket = Arc::new(WaylandSocket::connect(name));
-        let sub_socket = socket.clone();
 
         let read_socket = socket.clone();
         thread::spawn(move || loop {
             read_socket.read_event(); // TODO: Handle Event
         });
 
-        let display = Arc::new(WlObject::WlDisplay(WlDisplay {
-            object_id: 1,
-            socket: sub_socket,
-        }));
-        let mut obj_map = HashMap::new();
-        obj_map.insert(1, display.clone());
-
         let client = Client {
             socket,
-            obj_map,
-            display,
+            obj_map: Mutex::new(HashMap::new()),
         };
+        client.bind_obj::<WlDisplay>(1);
 
         return client;
     }
 
-    pub fn get_display(&self) -> &WlDisplay {
-        match &*self.display {
-            WlObject::WlDisplay(display) => &display,
-            _ => panic!("Display is not display type"),
+    pub fn get_display(&self) -> WlDisplay {
+        let wl_obj = self.obj_map.lock().unwrap().get(&1).unwrap().clone();
+        match &*wl_obj {
+            WlObject::WlDisplay(display) => display.clone(),
+            _ => panic!("Object ID 1 is not Display"), // TODO: Handle error in rust way.
         }
+    }
+
+    pub fn bind_obj<T: WlEnum>(&self, obj_id: u32) {
+        let wl_obj = Arc::new(T::new(obj_id, self.socket.clone()).to_enum());
+        self.obj_map.lock().unwrap().insert(obj_id, wl_obj.clone());
     }
 
     pub fn disconnect(&self) {
