@@ -487,7 +487,7 @@ pub fn generate_wayland_protocol_code() -> String {
                     });
                     Some(quote! {
                         #true_op_code => {
-                            info!("Receive event {}", #ev_name_str); // TODO: parse Event
+                            info!("Receive event {}", #ev_name_str);
                             let mut parsed_len: usize = 0;
                             #(#parse_args)*
                             #event_interface_name::#ev_name(#ev_name {
