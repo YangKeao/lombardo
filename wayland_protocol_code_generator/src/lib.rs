@@ -156,6 +156,7 @@ pub fn generate_wayland_protocol_code() -> String {
                                         op_code: #op_code,
                                         #(#set_fields),*
                                     };
+                                    // TODO: Serialize buffer
                                     self.socket.send(unsafe { &transmute::<#pre_struct_name, [u8; size_of::<#pre_struct_name>()]>(buffer) });
                                 }
                             })
