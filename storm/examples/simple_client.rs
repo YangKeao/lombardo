@@ -29,14 +29,14 @@ fn main() {
                         .get_obj(gl_ev.sender_id)
                         .try_get_wl_registry()
                         .unwrap()
-                        .bind(gl_ev.name, 3);
+                        .bind(gl_ev.name, String::from("wl_compositor"), gl_ev.version, 3);
                 } else if gl_ev.interface == "wl_shell" {
                     c_client.bind_obj::<WlShell>(4);
                     c_client
                         .get_obj(gl_ev.sender_id)
                         .try_get_wl_registry()
                         .unwrap()
-                        .bind(gl_ev.name, 4);
+                        .bind(gl_ev.name, String::from("wl_shell"), gl_ev.version, 4);
                 }
             }
             _ => {}
