@@ -2,14 +2,15 @@ use super::socket::WaylandSocket;
 use super::wayland;
 use super::wayland::{WlDisplay, WlObject, WlRawObject};
 use std::collections::HashMap;
-use std::sync::Arc;
 use std::sync::Mutex;
+use std::sync::{Arc, RwLock};
 use std::thread;
 
 #[derive(Clone)]
 pub struct Client {
     socket: Arc<WaylandSocket>,
     pub obj_map: Arc<Mutex<HashMap<u32, Arc<WlObject>>>>,
+    pub event_listeners: Arc<RwLock<Vec<Box<Fn(&wayland::Event) + Send + Sync>>>>,
 }
 
 impl Client {
@@ -19,6 +20,7 @@ impl Client {
         let client = Client {
             socket,
             obj_map: Arc::new(Mutex::new(HashMap::new())),
+            event_listeners: Arc::new(RwLock::new(Vec::new())),
         };
         client.bind_obj::<WlDisplay>(1);
         client.start_event_loop();
@@ -36,17 +38,8 @@ impl Client {
                 raw_event_header.op_code,
                 msg_body,
             );
-            match &event {
-                wayland::Event::WlRegistryEvent(reg_ev) => match reg_ev {
-                    wayland::WlRegistryEvent::WlRegistryGlobalEvent(rm_ev) => {
-                        info!(
-                            "WlRegistryGlobalEvent: Name: {}, Interface: {}",
-                            rm_ev.name, rm_ev.interface
-                        );
-                    }
-                    _ => {}
-                },
-                _ => {}
+            for event_handler in this.event_listeners.read().unwrap().iter() {
+                event_handler(&event);
             }
         });
     }
@@ -62,6 +55,10 @@ impl Client {
     pub fn bind_obj<T: WlRawObject>(&self, obj_id: u32) {
         let wl_obj = Arc::new(T::new(obj_id, self.socket.clone()).to_enum());
         self.obj_map.lock().unwrap().insert(obj_id, wl_obj.clone());
+    }
+
+    pub fn add_event_listener(&self, event_handler: Box<Fn(&wayland::Event) + Send + Sync>) {
+        self.event_listeners.write().unwrap().push(event_handler);
     }
 
     pub fn disconnect(&self) {
