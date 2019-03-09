@@ -430,10 +430,6 @@ pub fn generate_wayland_protocol_code() -> String {
                                         })
                                     }
                                     "string" => {
-//                                        Some(quote! {
-//                                            let #arg_name = String::new();
-//                                            unimplemented!();
-//                                        })
                                         Some(quote! {
                                             parsed_len += size_of::<u32>();
                                             let start = parsed_len - size_of::<u32>();
@@ -451,7 +447,7 @@ pub fn generate_wayland_protocol_code() -> String {
                                                 tmp_ptr.set_len(str_len);
                                                 std::ptr::copy(src_ptr, tmp_ptr.as_mut_ptr(), str_len);
                                             };
-                                            let #arg_name = std::str::from_utf8(&tmp_ptr).unwrap().to_string();
+                                            let #arg_name = std::str::from_utf8(&tmp_ptr).unwrap().trim_matches('\0').to_string();
                                         })
                                     }
                                     "array" => {
