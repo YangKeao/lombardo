@@ -443,7 +443,6 @@ pub fn generate_wayland_protocol_code() -> String {
                                                 *raw_ptr
                                             };
                                             let str_len = (str_len as f64 / 4.0).ceil() as usize * 4;
-                                            println!("{} {} {:?}", str_len, (start + size_of::<u32>()), msg_body);
                                             parsed_len += str_len;
 
                                             let src_ptr = msg_body[(start + size_of::<u32>())..parsed_len].as_ptr();
