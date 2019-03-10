@@ -62,8 +62,6 @@ impl Client {
                 wayland::WlCallbackEvent::WlCallbackDoneEvent(done) => {
                     if done.sender_id == callback_id {
                         info!("Callback id {} Done", callback_id);
-                        this.delete_obj(callback_id);
-
                         let &(ref done, ref cond_var) = &*c_done_pair;
                         *(done.lock().unwrap()) = true;
                         cond_var.notify_all();
