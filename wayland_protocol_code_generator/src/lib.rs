@@ -88,43 +88,10 @@ pub fn generate_wayland_protocol_code() -> String {
                     &format!("I{}", interface.name.to_camel_case()),
                     Span::call_site(),
                 );
-                let pre_structs = interface.items.iter().filter_map(|msg| match msg {
-                    InterfaceChild::Request(req) => {
-                        let fields = req.items.iter().filter_map(|child| match child {
-                            EventOrRequestField::Arg(arg) => {
-                                let arg_name = Ident::new(&arg.name, Span::call_site());
-                                let arg_type =
-                                    Ident::new(&arg.typ.to_camel_case(), Span::call_site());
-                                Some(quote! {#arg_name: #arg_type})
-                            }
-                            _ => None,
-                        });
-                        let pre_struct_name = Ident::new(
-                            &format!("{}{}Request", struct_name, req.name.to_camel_case()),
-                            Span::call_site(),
-                        );
-
-                        Some(quote! {
-                            #[repr(packed)]
-                            struct #pre_struct_name {
-                                #[allow(dead_code)]
-                                sender_id: u32,
-                                #[allow(dead_code)]
-                                op_code: u16,
-                                #[allow(dead_code)]
-                                msg_size: u16,
-                                #(#[allow(dead_code)]#fields),*
-                            }
-                        })
-                    }
-                    _ => None,
-                });
                 let mut req_op_code_count: u16 = 0;
                 let functions = interface.items.iter().filter_map(|msg| {
                     match msg {
                         InterfaceChild::Request(req) => {
-                            let pre_struct_name = Ident::new(&format!("{}{}Request", struct_name, req.name.to_camel_case()), Span::call_site());
-
                             let args = req.items.iter().filter_map(|child| {
                                 match child {
                                     EventOrRequestField::Arg(arg) => {
@@ -136,28 +103,73 @@ pub fn generate_wayland_protocol_code() -> String {
                                 }
                             });
                             let function_name = Ident::new(if req.name == "move" { "mv" } else { &req.name }, Span::call_site());
-                            let set_fields = req.items.iter().filter_map(|child| {
+
+                            req_op_code_count += 1;
+                            let op_code = req_op_code_count - 1;
+                            let add_raw_size = req.items.iter().filter_map(|child| {
                                 match child {
                                     EventOrRequestField::Arg(arg) => {
                                         let arg_name = Ident::new(&arg.name, Span::call_site());
-                                        Some(quote! {#arg_name})
+                                        let arg_typ = Ident::new(&arg.typ.to_camel_case(), Span::call_site());
+                                        match &arg.typ.to_camel_case()[..] {
+                                            "String" => {
+                                                Some(quote! {
+                                                    raw_size += (#arg_name.len() as f64 / 4.0).ceil() as usize * 4;
+                                                })
+                                            }
+                                            // TODO: Array and other types
+                                            _ => {
+                                                Some(quote! {raw_size += size_of::<#arg_typ>();})
+                                            }
+                                        }
                                     }
                                     _ => { None }
                                 }
                             });
 
-                            req_op_code_count += 1;
-                            let op_code = req_op_code_count - 1;
+                            let send_args = req.items.iter().filter_map(|child| {
+                                match child {
+                                    EventOrRequestField::Arg(arg) => {
+                                        let arg_name = Ident::new(&arg.name, Span::call_site());
+                                        let arg_typ = Ident::new(&arg.typ.to_camel_case(), Span::call_site());
+                                        match &arg.typ.to_camel_case()[..] {
+                                            "String" => {
+                                                Some(quote! {
+                                                    let str_len = #arg_name.len();
+                                                    unsafe {
+                                                        std::ptr::copy(&#arg_name.into_bytes()[0] as *const u8, &mut send_buffer[written_len] as *mut u8, str_len);
+                                                    }
+                                                    written_len += (str_len as f64 / 4.0).ceil() as usize * 4;
+                                                })
+                                            }
+                                            // TODO: Array and other types
+                                            _ => {
+                                                Some(quote! {
+                                                    unsafe {
+                                                        std::ptr::copy(&#arg_name as *const #arg_typ, &mut send_buffer[written_len] as *mut u8 as *mut #arg_typ, 1);
+                                                    }
+                                                    written_len += size_of::<u32>();
+                                                })
+                                            }
+                                        }
+                                    }
+                                    _ => { None }
+                                }
+                            });
+
                             Some(quote! {
                                 fn #function_name(&self, #(#args),*) {
-                                    let buffer = #pre_struct_name {
-                                        sender_id: self.object_id,
-                                        msg_size: size_of::<#pre_struct_name>() as u16,
-                                        op_code: #op_code,
-                                        #(#set_fields),*
-                                    };
-                                    // TODO: Serialize buffer
-                                    self.socket.send(unsafe { &transmute::<#pre_struct_name, [u8; size_of::<#pre_struct_name>()]>(buffer) });
+                                    let mut raw_size = 8;
+                                    #(#add_raw_size)*
+                                    let mut send_buffer: Vec<u8> = vec![0; raw_size];
+                                    unsafe {
+                                        std::ptr::copy(&self.object_id as *const u32, &mut send_buffer[0] as *mut u8 as *mut u32, 1);
+                                        let op_code_and_length: u32 = ((raw_size as u32) << 16) + (#op_code as u32);
+                                        std::ptr::copy(&op_code_and_length as *const u32, &mut send_buffer[size_of::<u32>()] as *mut u8 as *mut u32, 1);
+                                    }
+                                    let mut written_len: usize = 8;
+                                    #(#send_args)*
+                                    self.socket.send(&send_buffer);
                                 }
                             })
                         }
@@ -168,7 +180,6 @@ pub fn generate_wayland_protocol_code() -> String {
                 });
                 code = quote! {
                     #code
-                    #(#pre_structs)*
                     #[derive(Clone)]
                     pub struct #struct_name {
                         #[allow(dead_code)]
@@ -463,7 +474,7 @@ pub fn generate_wayland_protocol_code() -> String {
                                             let start = parsed_len - size_of::<#arg_typ>();
 
                                             let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const #arg_typ;
-                                            let mut #arg_name = unsafe{
+                                            let #arg_name = unsafe{
                                                 *raw_ptr
                                             };
                                         })
