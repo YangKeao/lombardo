@@ -114,7 +114,7 @@ pub fn generate_wayland_protocol_code() -> String {
                                         match &arg.typ.to_camel_case()[..] {
                                             "String" => {
                                                 Some(quote! {
-                                                    raw_size += (#arg_name.len() as f64 / 4.0).ceil() as usize * 4;
+                                                    raw_size += ((#arg_name.len() + 1) as f64 / 4.0).ceil() as usize * 4 + 4;
                                                 })
                                             }
                                             // TODO: Array and other types
@@ -136,10 +136,12 @@ pub fn generate_wayland_protocol_code() -> String {
                                             "String" => {
                                                 Some(quote! {
                                                     let str_len = #arg_name.len();
+                                                    let buf_len = ((#arg_name.len() + 1) as f64 / 4.0).ceil() as usize * 4;
                                                     unsafe {
-                                                        std::ptr::copy(&#arg_name.into_bytes()[0] as *const u8, &mut send_buffer[written_len] as *mut u8, str_len);
+                                                        std::ptr::copy(&buf_len as *const usize as *const u8, &mut send_buffer[written_len] as *mut u8, str_len + 1);
+                                                        std::ptr::copy(&#arg_name.into_bytes()[0] as *const u8, &mut send_buffer[written_len + 4] as *mut u8, str_len);
                                                     }
-                                                    written_len += (str_len as f64 / 4.0).ceil() as usize * 4;
+                                                    written_len += buf_len + 4;
                                                 })
                                             }
                                             // TODO: Array and other types
