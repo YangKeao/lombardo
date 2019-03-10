@@ -32,7 +32,7 @@ impl Client {
         let this = self.clone();
         thread::spawn(move || loop {
             let (raw_event_header, msg_body) = this.socket.read_event(); // TODO: Handle Event
-            let sender = this.get_obj(raw_event_header.sender_id);
+            let sender = this.get_obj(raw_event_header.sender_id).unwrap();
             let event = sender.parse_event(
                 raw_event_header.sender_id,
                 raw_event_header.op_code,
@@ -45,11 +45,11 @@ impl Client {
     }
 
     pub fn get_display(&self) -> WlDisplay {
-        self.get_obj(1).try_get_wl_display().unwrap()
+        self.get_obj(1).unwrap().try_get_wl_display().unwrap()
     }
 
-    pub fn get_obj(&self, obj_id: u32) -> Arc<WlObject> {
-        self.obj_map.lock().unwrap().get(&obj_id).unwrap().clone()
+    pub fn get_obj(&self, obj_id: u32) -> Option<Arc<WlObject>> {
+        Some(self.obj_map.lock().unwrap().get(&obj_id)?.clone())
     }
 
     pub fn bind_obj<T: WlRawObject>(&self, obj_id: u32) {

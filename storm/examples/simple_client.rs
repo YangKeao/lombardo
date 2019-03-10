@@ -27,6 +27,7 @@ fn main() {
                     c_client.bind_obj::<WlCompositor>(3);
                     c_client
                         .get_obj(gl_ev.sender_id)
+                        .unwrap()
                         .try_get_wl_registry()
                         .unwrap()
                         .bind(gl_ev.name, String::from("wl_compositor"), gl_ev.version, 3);
@@ -34,9 +35,35 @@ fn main() {
                     c_client.bind_obj::<WlShell>(4);
                     c_client
                         .get_obj(gl_ev.sender_id)
+                        .unwrap()
                         .try_get_wl_registry()
                         .unwrap()
                         .bind(gl_ev.name, String::from("wl_shell"), gl_ev.version, 4);
+                }
+
+                if c_client.get_obj(4).is_some() && c_client.get_obj(3).is_some() {
+                    c_client.bind_obj::<WlSurface>(5);
+                    c_client
+                        .get_obj(3)
+                        .unwrap()
+                        .try_get_wl_compositor()
+                        .unwrap()
+                        .create_surface(5);
+
+                    c_client.bind_obj::<WlShellSurface>(6);
+                    c_client
+                        .get_obj(4)
+                        .unwrap()
+                        .try_get_wl_shell()
+                        .unwrap()
+                        .get_shell_surface(6, 5);
+
+                    c_client
+                        .get_obj(6)
+                        .unwrap()
+                        .try_get_wl_shell_surface()
+                        .unwrap()
+                        .set_toplevel();
                 }
             }
             _ => {}
