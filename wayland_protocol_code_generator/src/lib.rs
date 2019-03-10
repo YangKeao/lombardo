@@ -7,7 +7,7 @@ extern crate wayland_protocol_scanner;
 extern crate quote;
 
 use heck::{CamelCase, SnakeCase};
-use proc_macro2::{Ident, Span};
+use proc_macro2::{Ident, Span, TokenStream};
 use wayland_protocol_scanner::EventOrRequestField;
 use wayland_protocol_scanner::InterfaceChild;
 use wayland_protocol_scanner::ProtocolChild;
@@ -314,7 +314,7 @@ pub fn generate_wayland_protocol_code() -> String {
                 &format!("{}Event", interface.name.to_camel_case()),
                 Span::call_site(),
             );
-            let interface_event_events = interface.items.iter().filter_map(|child| match child {
+            let mut interface_event_events: Vec<TokenStream> = interface.items.iter().filter_map(|child| match child {
                 InterfaceChild::Event(ev) => {
                     let interface_event_name = Ident::new(
                         &format!(
@@ -327,7 +327,8 @@ pub fn generate_wayland_protocol_code() -> String {
                     Some(quote! {#interface_event_name(#interface_event_name)})
                 }
                 _ => None,
-            });
+            }).collect();
+            interface_event_events.push(quote! {None});
             Some(quote! {
                 enum #interface_event_name {
                     #(#interface_event_events),*
@@ -517,7 +518,10 @@ pub fn generate_wayland_protocol_code() -> String {
                 WlObject::#interface_name(_obj) => {
                     Event::#event_interface_name(match op_code {
                         #(#parse_event_for_every_op_code)*
-                        _ => panic!("No such op_code")
+                        _ => {
+                            warn!("No such op_code");
+                            #event_interface_name::None
+                        }
                     })
                 }
             })

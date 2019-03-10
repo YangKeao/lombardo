@@ -69,7 +69,7 @@ fn main() {
                         .bind(gl_ev.name, String::from("wl_shell"), gl_ev.version, *obj_id);
                 } else if gl_ev.interface == "wl_shm" {
                     let mut obj_id = c_wl_shm_id.lock().unwrap();
-                    *obj_id = c_client.new_obj::<WlShell>();
+                    *obj_id = c_client.new_obj::<WlShm>();
                     c_client
                         .get_obj(gl_ev.sender_id)
                         .unwrap()
@@ -136,6 +136,10 @@ fn main() {
     let size = width * height * 4;
 
     let buffer_fd = tempfile().unwrap().as_raw_fd();
+    nix::fcntl::fcntl(
+        buffer_fd,
+        nix::fcntl::FcntlArg::F_SETFD(nix::fcntl::FdFlag::from_bits(1).unwrap()),
+    );
     unsafe {
         nix::sys::mman::mmap(
             0 as *mut c_void,
