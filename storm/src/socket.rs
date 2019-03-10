@@ -42,7 +42,7 @@ impl WaylandSocket {
 
     pub fn send(&self, buffer: &[u8]) {
         info!("Send to server {:?}", buffer);
-        //        self.socket.write().unwrap().write_all(buffer).unwrap();
+        //TODO: Add method to send fd;
         self.write_stream.lock().unwrap().write_all(buffer).unwrap();
     }
 
