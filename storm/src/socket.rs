@@ -40,8 +40,8 @@ impl WaylandSocket {
             .unwrap();
     }
 
-    pub fn send(&self, buffer: &[u8]) {
-        info!("Send to server {:?}", buffer);
+    pub fn send(&self, buffer: &[u8], fd: Option<std::os::unix::io::RawFd>) {
+        info!("Send to server Buffer:{:?}", buffer);
         //TODO: Add method to send fd;
         self.write_stream.lock().unwrap().write_all(buffer).unwrap();
     }

@@ -171,7 +171,7 @@ pub fn generate_wayland_protocol_code() -> String {
                                     }
                                     let mut written_len: usize = 8;
                                     #(#send_args)*
-                                    self.socket.send(&send_buffer);
+                                    self.socket.send(&send_buffer, Some(0));
                                 }
                             })
                         }
