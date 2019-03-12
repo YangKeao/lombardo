@@ -141,33 +141,42 @@ fn main() {
             .join("weston-shared-XXXXXX"),
     )
     .unwrap();
-    nix::unistd::unlink(&buffer_file_name);
-    nix::unistd::ftruncate(buffer_fd, size).unwrap();
 
     let buffer_fd_flags = FdFlag::from_bits(fcntl(buffer_fd, FcntlArg::F_GETFD).unwrap()).unwrap();
     fcntl(
         buffer_fd,
         nix::fcntl::F_SETFD(FdFlag::FD_CLOEXEC | buffer_fd_flags),
     );
-    unsafe {
-        nix::sys::mman::mmap(
-            0 as *mut c_void,
-            size as usize,
-            nix::sys::mman::ProtFlags::PROT_READ | nix::sys::mman::ProtFlags::PROT_WRITE,
-            nix::sys::mman::MapFlags::MAP_SHARED,
-            buffer_fd,
-            0,
+
+    nix::unistd::unlink(&buffer_file_name);
+    nix::unistd::ftruncate(buffer_fd, size).unwrap();
+    let mut shm_data = unsafe {
+        std::slice::from_raw_parts_mut(
+            nix::sys::mman::mmap(
+                std::ptr::null::<c_void>() as *mut c_void,
+                size as usize,
+                nix::sys::mman::ProtFlags::PROT_READ | nix::sys::mman::ProtFlags::PROT_WRITE,
+                nix::sys::mman::MapFlags::MAP_SHARED,
+                buffer_fd,
+                0,
+            )
+            .unwrap() as *mut u32,
+            (width * height) as usize,
         )
-        .unwrap();
+    };
+    for i in 0..(width * height) as usize {
+        shm_data[i] = 0xffff;
     }
 
+    let dup_fd =
+        fcntl(buffer_fd, nix::fcntl::F_DUPFD_CLOEXEC(0)).unwrap() as std::os::unix::io::RawFd;
     let wl_shm_pool_id = client.new_obj::<WlShmPool>();
     client
         .get_obj(wl_shm_id)
         .unwrap()
         .try_get_wl_shm()
         .unwrap()
-        .create_pool(wl_shm_pool_id, buffer_fd, size as i32);
+        .create_pool(wl_shm_pool_id, dup_fd, size as i32);
 
     let wl_buffer = client.new_obj::<WlBuffer>();
     client
