@@ -5,7 +5,7 @@ authors = ["Yang Keao <keao.yang@yahoo.com>"]
 edition = "2018"
 
 [dependencies]
-wayland_protocol_scanner = {path = "../wayland_protocol_scanner"}
+wayland_protocol_scanner = "0.1.0"
 heck = "0.3.1"
 quote = "0.6"
 syn = "0.15"
