@@ -6,6 +6,7 @@ extern crate nix;
 extern crate tempfile;
 
 use log::Level;
+use nix::fcntl::{fcntl, FcntlArg, FdFlag};
 use std::ffi::c_void;
 use std::io::{self, Write};
 use std::os::unix::io::AsRawFd;
@@ -135,20 +136,29 @@ fn main() {
     let height = 360;
     let size = width * height * 4;
 
-    let buffer_fd = tempfile().unwrap().as_raw_fd();
-    nix::fcntl::fcntl(
+    let (buffer_fd, buffer_file_name) = nix::unistd::mkstemp(
+        &std::path::Path::new(&std::env::var("XDG_RUNTIME_DIR").unwrap())
+            .join("weston-shared-XXXXXX"),
+    )
+    .unwrap();
+    nix::unistd::unlink(&buffer_file_name);
+    nix::unistd::ftruncate(buffer_fd, size).unwrap();
+
+    let buffer_fd_flags = FdFlag::from_bits(fcntl(buffer_fd, FcntlArg::F_GETFD).unwrap()).unwrap();
+    fcntl(
         buffer_fd,
-        nix::fcntl::FcntlArg::F_SETFD(nix::fcntl::FdFlag::from_bits(1).unwrap()),
+        nix::fcntl::F_SETFD(FdFlag::FD_CLOEXEC | buffer_fd_flags),
     );
     unsafe {
         nix::sys::mman::mmap(
             0 as *mut c_void,
-            size,
-            nix::sys::mman::ProtFlags::from_bits(1 & 2).unwrap(),
-            nix::sys::mman::MapFlags::from_bits(1).unwrap(),
+            size as usize,
+            nix::sys::mman::ProtFlags::PROT_READ | nix::sys::mman::ProtFlags::PROT_WRITE,
+            nix::sys::mman::MapFlags::MAP_SHARED,
             buffer_fd,
             0,
-        );
+        )
+        .unwrap();
     }
 
     let wl_shm_pool_id = client.new_obj::<WlShmPool>();

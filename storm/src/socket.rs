@@ -39,7 +39,10 @@ impl WaylandSocket {
 
     pub fn send(&self, buffer: &[u8], fd: Option<RawFd>) {
         info!("Send to server Buffer:{:?}", buffer);
-        self.write_stream.lock().unwrap().write(buffer, fd);
+        self.write_stream
+            .lock()
+            .unwrap()
+            .write(buffer, Some(&[fd.unwrap_or(0)]));
     }
 
     pub fn read_event(&self) -> Vec<(EventHeader, std::vec::Vec<u8>)> {

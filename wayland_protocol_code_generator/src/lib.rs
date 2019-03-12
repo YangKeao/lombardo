@@ -117,6 +117,9 @@ pub fn generate_wayland_protocol_code() -> String {
                                                     raw_size += ((#arg_name.len() + 1) as f64 / 4.0).ceil() as usize * 4 + 4;
                                                 })
                                             }
+                                            "Fd" => {
+                                                None
+                                            }
                                             // TODO: Array and other types
                                             _ => {
                                                 Some(quote! {raw_size += size_of::<#arg_typ>();})
@@ -144,6 +147,12 @@ pub fn generate_wayland_protocol_code() -> String {
                                                     written_len += buf_len + 4;
                                                 })
                                             }
+                                            "Fd" => {
+                                                Some(quote! {
+                                                    info!("Send FD: {}", #arg_name);
+                                                    send_fd = Some(#arg_name);
+                                                })
+                                            }
                                             // TODO: Array and other types
                                             _ => {
                                                 Some(quote! {
@@ -164,6 +173,7 @@ pub fn generate_wayland_protocol_code() -> String {
                                     let mut raw_size = 8;
                                     #(#add_raw_size)*
                                     let mut send_buffer: Vec<u8> = vec![0; raw_size];
+                                    let mut send_fd = None;
                                     unsafe {
                                         std::ptr::copy(&self.object_id as *const u32, &mut send_buffer[0] as *mut u8 as *mut u32, 1);
                                         let op_code_and_length: u32 = ((raw_size as u32) << 16) + (#op_code as u32);
@@ -171,7 +181,7 @@ pub fn generate_wayland_protocol_code() -> String {
                                     }
                                     let mut written_len: usize = 8;
                                     #(#send_args)*
-                                    self.socket.send(&send_buffer, Some(0));
+                                    self.socket.send(&send_buffer, send_fd);
                                 }
                             })
                         }
