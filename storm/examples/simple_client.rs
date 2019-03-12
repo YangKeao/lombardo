@@ -148,7 +148,7 @@ fn main() {
         nix::fcntl::F_SETFD(FdFlag::FD_CLOEXEC | buffer_fd_flags),
     );
 
-    nix::unistd::unlink(&buffer_file_name);
+    //    nix::unistd::unlink(&buffer_file_name);
     nix::unistd::ftruncate(buffer_fd, size).unwrap();
     let mut shm_data = unsafe {
         std::slice::from_raw_parts_mut(
@@ -177,6 +177,7 @@ fn main() {
         .try_get_wl_shm()
         .unwrap()
         .create_pool(wl_shm_pool_id, dup_fd, size as i32);
+    nix::unistd::close(dup_fd);
 
     let wl_buffer = client.new_obj::<WlBuffer>();
     client

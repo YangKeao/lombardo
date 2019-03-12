@@ -30,10 +30,9 @@ impl UnixSocket {
         return UnixSocket { fd };
     }
 
-    pub fn write(&mut self, buffer: &[u8], fds: Option<&[RawFd]>) {
+    pub fn write(&mut self, buffer: &[u8], fds: &[RawFd]) {
         let iov: [IoVec<&[u8]>; 1] = [IoVec::from_slice(buffer); 1];
-        let cmsg = [socket::ControlMessage::ScmRights(fds.unwrap_or(&[]))];
-
+        let cmsg = [socket::ControlMessage::ScmRights(fds)];
         sendmsg(self.fd, &iov, &cmsg, MsgFlags::empty(), None).unwrap();
     }
 

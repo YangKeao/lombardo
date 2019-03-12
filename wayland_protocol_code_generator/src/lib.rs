@@ -150,7 +150,8 @@ pub fn generate_wayland_protocol_code() -> String {
                                             "Fd" => {
                                                 Some(quote! {
                                                     info!("Send FD: {}", #arg_name);
-                                                    send_fd = Some(#arg_name);
+                                                    send_fd[send_fd_num] = #arg_name;
+                                                    send_fd_num += 1;
                                                 })
                                             }
                                             // TODO: Array and other types
@@ -173,7 +174,8 @@ pub fn generate_wayland_protocol_code() -> String {
                                     let mut raw_size = 8;
                                     #(#add_raw_size)*
                                     let mut send_buffer: Vec<u8> = vec![0; raw_size];
-                                    let mut send_fd = None;
+                                    let mut send_fd = vec![0; 16];
+                                    let mut send_fd_num = 0;
                                     unsafe {
                                         std::ptr::copy(&self.object_id as *const u32, &mut send_buffer[0] as *mut u8 as *mut u32, 1);
                                         let op_code_and_length: u32 = ((raw_size as u32) << 16) + (#op_code as u32);
@@ -181,7 +183,10 @@ pub fn generate_wayland_protocol_code() -> String {
                                     }
                                     let mut written_len: usize = 8;
                                     #(#send_args)*
-                                    self.socket.send(&send_buffer, send_fd);
+                                    unsafe {
+                                        send_fd.set_len(send_fd_num);
+                                    }
+                                    self.socket.send(&send_buffer, &send_fd);
                                 }
                             })
                         }
