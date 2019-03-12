@@ -3,6 +3,8 @@ name = "wayland_protocol_code_generator"
 version = "0.1.0"
 authors = ["Yang Keao <keao.yang@yahoo.com>"]
 edition = "2018"
+description = "Generate codes used by saiko"
+license = "MIT"
 
 [dependencies]
 wayland_protocol_scanner = "0.1.0"
