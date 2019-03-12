@@ -3,6 +3,8 @@ name = "wayland_protocol_scanner"
 version = "0.1.0"
 authors = ["Yang Keao <keao.yang@yahoo.com>"]
 edition = "2018"
+license = "MIT"
+description = "A crate to scan wayland.xml and get some meta information."
 
 [dependencies]
 serde = "1.0.88"
