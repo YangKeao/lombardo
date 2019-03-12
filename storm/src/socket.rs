@@ -42,7 +42,7 @@ impl WaylandSocket {
         self.write_stream.lock().unwrap().write(buffer, fd);
     }
 
-    pub fn read_event(&self) -> (EventHeader, std::vec::Vec<u8>) {
+    pub fn read_event(&self) -> Vec<(EventHeader, std::vec::Vec<u8>)> {
         self.read_stream.lock().unwrap().read_event()
     }
 }

@@ -36,7 +36,7 @@ impl UnixSocket {
                 self.fd,
                 &[IoVec::from_slice(buffer)],
                 &[ControlMessage::ScmRights(&[fd])],
-                MsgFlags::all(),
+                MsgFlags::empty(),
                 None,
             )
             .unwrap(),
@@ -44,7 +44,7 @@ impl UnixSocket {
                 self.fd,
                 &[IoVec::from_slice(buffer)],
                 &[ControlMessage::ScmRights(&[])],
-                MsgFlags::all(),
+                MsgFlags::empty(),
                 None,
             )
             .unwrap(),
@@ -55,7 +55,7 @@ impl UnixSocket {
         let mut iov: [IoVec<&mut [u8]>; 1] = [IoVec::from_mut_slice(buffer); 1];
         let mut cmsg: CmsgSpace<[RawFd; 1]> = CmsgSpace::new();
 
-        let msg = recvmsg(self.fd, &iov, Some(&mut cmsg), MsgFlags::all()).unwrap();
+        let msg = recvmsg(self.fd, &iov, Some(&mut cmsg), MsgFlags::empty()).unwrap();
 
         let mut num_fds = 0;
         let mut buf = Cursor::new(fds);
@@ -69,6 +69,7 @@ impl UnixSocket {
             }
         }
 
+        info!("Read {} bytes", msg.bytes);
         return (msg.bytes, num_fds);
     }
 

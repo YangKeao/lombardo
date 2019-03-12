@@ -34,15 +34,17 @@ impl Client {
     pub fn start_event_loop(&self) {
         let this = self.clone();
         thread::spawn(move || loop {
-            let (raw_event_header, msg_body) = this.socket.read_event(); // TODO: Handle Event
-            let sender = this.get_obj(raw_event_header.sender_id).unwrap();
-            let event = sender.parse_event(
-                raw_event_header.sender_id,
-                raw_event_header.op_code,
-                msg_body,
-            );
-            for event_handler in this.event_listeners.read().unwrap().iter() {
-                event_handler(&event);
+            let evs = this.socket.read_event();
+            for (raw_event_header, msg_body) in evs {
+                let sender = this.get_obj(raw_event_header.sender_id).unwrap();
+                let event = sender.parse_event(
+                    raw_event_header.sender_id,
+                    raw_event_header.op_code,
+                    msg_body,
+                );
+                for event_handler in this.event_listeners.read().unwrap().iter() {
+                    event_handler(&event);
+                }
             }
         });
     }

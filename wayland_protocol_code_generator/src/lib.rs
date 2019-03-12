@@ -385,31 +385,42 @@ pub fn generate_wayland_protocol_code() -> String {
             }
         }
         pub trait ReadEvent {
-            fn read_event(&mut self) -> (EventHeader, Vec<u8>) ;
+            fn read_event(&mut self) -> Vec<(EventHeader, Vec<u8>)> ;
         }
         impl ReadEvent for UnixSocket {
-            fn read_event(&mut self) -> (EventHeader, Vec<u8>) {
+            fn read_event(&mut self) -> Vec<(EventHeader, Vec<u8>)> {
                 // TODO: don't reallocate buffer and fds every time
                 let mut buffer: [u8; 1024] = [0; 1024];
                 let mut fds: [u8; 24] = [0; 24];
 
                 let (size, num_fds) = self.read(&mut buffer, &mut fds);
-
-                let mut event_header: [u8; size_of::<EventHeaderPre>()] = [0; size_of::<EventHeaderPre>()];
-                unsafe {
-                    std::ptr::copy(buffer.as_ptr(), event_header.as_mut_ptr(), size_of::<EventHeaderPre>());
+                if size == 1024 {
+                    warn!("Buffer is full");
                 }
 
-                let event_header = unsafe {
-                    transmute::<[u8; size_of::<EventHeaderPre>()], EventHeaderPre>(event_header).convert_to_event_header()
-                };
+                let mut ret_value = Vec::new();
+                let mut read_size: usize = 0;
+                while read_size < size {
+                    let mut event_header: [u8; size_of::<EventHeaderPre>()] = [0; size_of::<EventHeaderPre>()];
+                    unsafe {
+                        std::ptr::copy(&buffer[read_size] as *const u8, event_header.as_mut_ptr(), size_of::<EventHeaderPre>());
+                    }
 
-                let mut msg_body = vec![0; event_header.msg_size as usize];
-                unsafe {
-                    std::ptr::copy(&buffer[size_of::<EventHeaderPre>()] as *const u8, msg_body.as_mut_ptr(), event_header.msg_size as usize);
+                    let event_header = unsafe {
+                        transmute::<[u8; size_of::<EventHeaderPre>()], EventHeaderPre>(event_header).convert_to_event_header()
+                    };
+
+                    let msg_size = event_header.msg_size as usize;
+                    let mut msg_body = vec![0; event_header.msg_size as usize];
+                    unsafe {
+                        std::ptr::copy(&buffer[read_size + size_of::<EventHeaderPre>()] as *const u8, msg_body.as_mut_ptr(), msg_size);
+                    }
+
+                    ret_value.push((event_header, msg_body));
+                    read_size += size_of::<EventHeaderPre>() + msg_size;
                 }
 
-                return (event_header, msg_body);
+                return ret_value;
             }
         }
     };
