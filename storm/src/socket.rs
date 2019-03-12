@@ -1,13 +1,14 @@
 use super::wayland::EventHeader;
 use super::wayland::ReadEvent;
+use crate::unix_socket::UnixSocket;
 use std::io::Write;
-use std::os::unix::net::UnixStream;
+use std::os::unix::io::RawFd;
 use std::sync::Arc;
 use std::sync::Mutex;
 
 pub struct WaylandSocket {
-    write_stream: Arc<Mutex<UnixStream>>,
-    read_stream: Arc<Mutex<UnixStream>>,
+    write_stream: Arc<Mutex<UnixSocket>>,
+    read_stream: Arc<Mutex<UnixSocket>>,
 }
 
 impl WaylandSocket {
@@ -22,9 +23,9 @@ impl WaylandSocket {
             path.to_path_buf()
         };
 
-        let stream = UnixStream::connect(path).unwrap();
-        let write_stream = Arc::new(Mutex::new(stream.try_clone().unwrap()));
-        let read_stream = Arc::new(Mutex::new(stream.try_clone().unwrap()));
+        let socket = UnixSocket::connect(path);
+        let write_stream = Arc::new(Mutex::new(socket.clone()));
+        let read_stream = Arc::new(Mutex::new(socket.clone()));
 
         WaylandSocket {
             write_stream,
@@ -33,17 +34,12 @@ impl WaylandSocket {
     }
 
     pub fn disconnect(&self) {
-        self.write_stream
-            .lock()
-            .unwrap()
-            .shutdown(std::net::Shutdown::Both)
-            .unwrap();
+        self.write_stream.lock().unwrap().shutdown();
     }
 
-    pub fn send(&self, buffer: &[u8], fd: Option<std::os::unix::io::RawFd>) {
+    pub fn send(&self, buffer: &[u8], fd: Option<RawFd>) {
         info!("Send to server Buffer:{:?}", buffer);
-        //TODO: Add method to send fd;
-        self.write_stream.lock().unwrap().write_all(buffer).unwrap();
+        self.write_stream.lock().unwrap().write(buffer, fd);
     }
 
     pub fn read_event(&self) -> (EventHeader, std::vec::Vec<u8>) {

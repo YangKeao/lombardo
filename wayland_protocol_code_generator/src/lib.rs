@@ -18,10 +18,10 @@ pub fn generate_wayland_protocol_code() -> String {
     // Required USE
     let mut code = quote! {
         use super::socket::*;
+        use crate::unix_socket::UnixSocket;
         use std::sync::Arc;
         use std::mem::transmute;
         use std::mem::size_of;
-        use std::os::unix::net::UnixStream;
         use std::io::Read;
 
         type NewId=u32;
@@ -387,17 +387,27 @@ pub fn generate_wayland_protocol_code() -> String {
         pub trait ReadEvent {
             fn read_event(&mut self) -> (EventHeader, Vec<u8>) ;
         }
-        impl ReadEvent for UnixStream {
+        impl ReadEvent for UnixSocket {
             fn read_event(&mut self) -> (EventHeader, Vec<u8>) {
+                // TODO: don't reallocate buffer and fds every time
+                let mut buffer: [u8; 1024] = [0; 1024];
+                let mut fds: [u8; 24] = [0; 24];
+
+                let (size, num_fds) = self.read(&mut buffer, &mut fds);
+
                 let mut event_header: [u8; size_of::<EventHeaderPre>()] = [0; size_of::<EventHeaderPre>()];
-                self.read(&mut event_header).unwrap(); // TODO: Handle Error
+                unsafe {
+                    std::ptr::copy(buffer.as_ptr(), event_header.as_mut_ptr(), size_of::<EventHeaderPre>());
+                }
 
                 let event_header = unsafe {
                     transmute::<[u8; size_of::<EventHeaderPre>()], EventHeaderPre>(event_header).convert_to_event_header()
                 };
 
                 let mut msg_body = vec![0; event_header.msg_size as usize];
-                self.read(&mut msg_body).unwrap(); // TODO: Handle Error
+                unsafe {
+                    std::ptr::copy(&buffer[size_of::<EventHeaderPre>()] as *const u8, msg_body.as_mut_ptr(), event_header.msg_size as usize);
+                }
 
                 return (event_header, msg_body);
             }
