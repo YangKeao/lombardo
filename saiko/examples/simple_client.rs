@@ -7,13 +7,13 @@ extern crate tempfile;
 
 use log::Level;
 use nix::fcntl::{fcntl, FcntlArg, FdFlag};
+use saiko::wayland;
+use saiko::wayland::*;
 use std::ffi::c_void;
 use std::io::{self, Write};
 use std::os::unix::io::AsRawFd;
 use std::sync::{Arc, Mutex};
 use std::thread;
-use saiko::wayland;
-use saiko::wayland::*;
 use tempfile::tempfile;
 
 fn main() {
@@ -207,6 +207,28 @@ fn main() {
         .unwrap()
         .commit();
 
+    let wl_callback = client.new_obj::<WlCallback>();
+    let c_wl_callback = wl_callback.clone();
+    let c_client = client.clone();
+    client.add_event_listener(Box::new(move |ev| match ev {
+        wayland::Event::WlCallbackEvent(callback_ev) => match callback_ev {
+            wayland::WlCallbackEvent::WlCallbackDoneEvent(done) => {
+                if done.sender_id == c_wl_callback {
+                    info!("Redraw");
+                }
+            }
+            _ => {}
+        },
+        _ => {}
+    }));
+    client
+        .get_obj(wl_surface_id)
+        .unwrap()
+        .try_get_wl_surface()
+        .unwrap()
+        .frame(wl_callback);
+
+    client.sync();
     loop {}
     client.disconnect();
 
