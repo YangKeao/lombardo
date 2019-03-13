@@ -75,7 +75,7 @@ fn generate_traits(mut code: TokenStream) -> TokenStream {
                     }
                     _ => None,
                 });
-                let interface_name = ident!("I{}", interface.name.to_camel_case(); None);
+                let interface_name = ident!("I{}", interface.name; Some(Case::CamelCase));
                 code = quote! {
                     #code
                     pub trait #interface_name {
@@ -177,16 +177,21 @@ fn generate_req_interface_structs_and_functions(mut code: TokenStream) -> TokenS
 
                             Some(quote! {
                                 fn #function_name(&self, #(#args),*) {
+                                    #[allow(unused)]
                                     let mut raw_size = 8;
                                     #(#add_raw_size)*
                                     let mut send_buffer: Vec<u8> = vec![0; raw_size];
                                     let mut send_fd = vec![0; 16];
+
+                                    #[allow(unused)]
                                     let mut send_fd_num = 0;
                                     unsafe {
                                         std::ptr::copy(&self.object_id as *const u32, &mut send_buffer[0] as *mut u8 as *mut u32, 1);
                                         let op_code_and_length: u32 = ((raw_size as u32) << 16) + (#op_code as u32);
                                         std::ptr::copy(&op_code_and_length as *const u32, &mut send_buffer[size_of::<u32>()] as *mut u8 as *mut u32, 1);
                                     }
+
+                                    #[allow(unused)]
                                     let mut written_len: usize = 8;
                                     #(#send_args)*
                                     unsafe {
@@ -435,7 +440,6 @@ fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> Toke
                     let parse_args = ev.items.iter().filter_map(|field| {
                         match field {
                             EventOrRequestField::Arg(arg) => {
-                                let arg_name_str = arg.name.to_snake_case();
                                 let arg_name = ident!("{}", arg.name; Some(Case::SnakeCase));
                                 let arg_typ = ident!("{}", arg.typ; Some(Case::CamelCase));
                                 match &arg.typ[..] {
@@ -491,7 +495,6 @@ fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> Toke
                     let arg_names = ev.items.iter().filter_map(|field| {
                         match field {
                             EventOrRequestField::Arg(arg) => {
-                                let arg_name_str = arg.name.to_snake_case();
                                 let arg_name = ident!("{}", arg.name; Some(Case::SnakeCase));
                                 Some(quote! {#arg_name})
                             }
@@ -501,6 +504,8 @@ fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> Toke
                     Some(quote! {
                         #true_op_code => {
                             info!("Receive event {}", #ev_name_str);
+
+                            #[allow(unused)]
                             let mut parsed_len: usize = 0;
                             #(#parse_args)*
                             #event_interface_name::#ev_name(#ev_name {

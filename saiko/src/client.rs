@@ -1,7 +1,7 @@
 use super::socket::WaylandSocket;
 use super::wayland;
 use super::wayland::{WlDisplay, WlObject, WlRawObject};
-use crate::wayland::{IWlDisplay, WlCallback};
+use crate::wayland::{IwlDisplay, WlCallback};
 use std::collections::HashMap;
 use std::sync::Mutex;
 use std::sync::{Arc, Condvar, RwLock};
@@ -61,7 +61,7 @@ impl Client {
         let c_done_pair = done_pair.clone();
         self.add_event_listener(Box::new(move |ev| match ev {
             wayland::Event::WlCallbackEvent(callback_ev) => match callback_ev {
-                wayland::WlCallbackEvent::WlCallbackDoneEvent(done) => {
+                wayland::WlCallbackEvent::WlCallbackdoneEvent(done) => {
                     if done.sender_id == callback_id {
                         info!("Callback id {} Done", callback_id);
                         let &(ref done, ref cond_var) = &*c_done_pair;

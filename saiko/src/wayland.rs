@@ -11,19 +11,19 @@ type Fd = i32;
 type Object = u32;
 type Fixed = f32;
 type Array = Vec<u32>;
-pub trait IWlDisplay {
+pub trait IwlDisplay {
     fn sync(&self, callback: NewId);
     fn get_registry(&self, registry: NewId);
 }
-pub trait IWlRegistry {
+pub trait IwlRegistry {
     fn bind(&self, name: Uint, interface_name: String, interface_version: Uint, id: NewId);
 }
-pub trait IWlCallback {}
-pub trait IWlCompositor {
+pub trait IwlCallback {}
+pub trait IwlCompositor {
     fn create_surface(&self, id: NewId);
     fn create_region(&self, id: NewId);
 }
-pub trait IWlShmPool {
+pub trait IwlShmPool {
     fn create_buffer(
         &self,
         id: NewId,
@@ -36,37 +36,37 @@ pub trait IWlShmPool {
     fn destroy(&self);
     fn resize(&self, size: Int);
 }
-pub trait IWlShm {
+pub trait IwlShm {
     fn create_pool(&self, id: NewId, fd: Fd, size: Int);
 }
-pub trait IWlBuffer {
+pub trait IwlBuffer {
     fn destroy(&self);
 }
-pub trait IWlDataOffer {
+pub trait IwlDataOffer {
     fn accept(&self, serial: Uint, mime_type: String);
     fn receive(&self, mime_type: String, fd: Fd);
     fn destroy(&self);
     fn finish(&self);
     fn set_actions(&self, dnd_actions: Uint, preferred_action: Uint);
 }
-pub trait IWlDataSource {
+pub trait IwlDataSource {
     fn offer(&self, mime_type: String);
     fn destroy(&self);
     fn set_actions(&self, dnd_actions: Uint);
 }
-pub trait IWlDataDevice {
+pub trait IwlDataDevice {
     fn start_drag(&self, source: Object, origin: Object, icon: Object, serial: Uint);
     fn set_selection(&self, source: Object, serial: Uint);
     fn release(&self);
 }
-pub trait IWlDataDeviceManager {
+pub trait IwlDataDeviceManager {
     fn create_data_source(&self, id: NewId);
     fn get_data_device(&self, id: NewId, seat: Object);
 }
-pub trait IWlShell {
+pub trait IwlShell {
     fn get_shell_surface(&self, id: NewId, surface: Object);
 }
-pub trait IWlShellSurface {
+pub trait IwlShellSurface {
     fn pong(&self, serial: Uint);
     fn mv(&self, seat: Object, serial: Uint);
     fn resize(&self, seat: Object, serial: Uint, edges: Uint);
@@ -78,7 +78,7 @@ pub trait IWlShellSurface {
     fn set_title(&self, title: String);
     fn set_class(&self, class_: String);
 }
-pub trait IWlSurface {
+pub trait IwlSurface {
     fn destroy(&self);
     fn attach(&self, buffer: Object, x: Int, y: Int);
     fn damage(&self, x: Int, y: Int, width: Int, height: Int);
@@ -90,35 +90,35 @@ pub trait IWlSurface {
     fn set_buffer_scale(&self, scale: Int);
     fn damage_buffer(&self, x: Int, y: Int, width: Int, height: Int);
 }
-pub trait IWlSeat {
+pub trait IwlSeat {
     fn get_pointer(&self, id: NewId);
     fn get_keyboard(&self, id: NewId);
     fn get_touch(&self, id: NewId);
     fn release(&self);
 }
-pub trait IWlPointer {
+pub trait IwlPointer {
     fn set_cursor(&self, serial: Uint, surface: Object, hotspot_x: Int, hotspot_y: Int);
     fn release(&self);
 }
-pub trait IWlKeyboard {
+pub trait IwlKeyboard {
     fn release(&self);
 }
-pub trait IWlTouch {
+pub trait IwlTouch {
     fn release(&self);
 }
-pub trait IWlOutput {
+pub trait IwlOutput {
     fn release(&self);
 }
-pub trait IWlRegion {
+pub trait IwlRegion {
     fn destroy(&self);
     fn add(&self, x: Int, y: Int, width: Int, height: Int);
     fn subtract(&self, x: Int, y: Int, width: Int, height: Int);
 }
-pub trait IWlSubcompositor {
+pub trait IwlSubcompositor {
     fn destroy(&self);
     fn get_subsurface(&self, id: NewId, surface: Object, parent: Object);
 }
-pub trait IWlSubsurface {
+pub trait IwlSubsurface {
     fn destroy(&self);
     fn set_position(&self, x: Int, y: Int);
     fn place_above(&self, sibling: Object);
@@ -133,12 +133,14 @@ pub struct WlDisplay {
     #[allow(dead_code)]
     pub socket: Arc<WaylandSocket>,
 }
-impl IWlDisplay for WlDisplay {
+impl IwlDisplay for WlDisplay {
     fn sync(&self, callback: NewId) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<NewId>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -153,6 +155,7 @@ impl IWlDisplay for WlDisplay {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -168,10 +171,12 @@ impl IWlDisplay for WlDisplay {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn get_registry(&self, registry: NewId) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<NewId>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -186,6 +191,7 @@ impl IWlDisplay for WlDisplay {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -208,15 +214,17 @@ pub struct WlRegistry {
     #[allow(dead_code)]
     pub socket: Arc<WaylandSocket>,
 }
-impl IWlRegistry for WlRegistry {
+impl IwlRegistry for WlRegistry {
     fn bind(&self, name: Uint, interface_name: String, interface_version: Uint, id: NewId) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Uint>();
-        raw_size += ((interface_name.len() + 1) as f64 / 4.0).ceil() as usize * 4 + 4;
+        raw_size += size_of::<String>();
         raw_size += size_of::<Uint>();
         raw_size += size_of::<NewId>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -231,6 +239,7 @@ impl IWlRegistry for WlRegistry {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -284,7 +293,7 @@ pub struct WlCallback {
     #[allow(dead_code)]
     pub socket: Arc<WaylandSocket>,
 }
-impl IWlCallback for WlCallback {}
+impl IwlCallback for WlCallback {}
 #[derive(Clone)]
 pub struct WlCompositor {
     #[allow(dead_code)]
@@ -292,12 +301,14 @@ pub struct WlCompositor {
     #[allow(dead_code)]
     pub socket: Arc<WaylandSocket>,
 }
-impl IWlCompositor for WlCompositor {
+impl IwlCompositor for WlCompositor {
     fn create_surface(&self, id: NewId) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<NewId>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -312,6 +323,7 @@ impl IWlCompositor for WlCompositor {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -327,10 +339,12 @@ impl IWlCompositor for WlCompositor {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn create_region(&self, id: NewId) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<NewId>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -345,6 +359,7 @@ impl IWlCompositor for WlCompositor {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -367,7 +382,7 @@ pub struct WlShmPool {
     #[allow(dead_code)]
     pub socket: Arc<WaylandSocket>,
 }
-impl IWlShmPool for WlShmPool {
+impl IwlShmPool for WlShmPool {
     fn create_buffer(
         &self,
         id: NewId,
@@ -377,6 +392,7 @@ impl IWlShmPool for WlShmPool {
         stride: Int,
         format: Uint,
     ) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<NewId>();
         raw_size += size_of::<Int>();
@@ -386,6 +402,7 @@ impl IWlShmPool for WlShmPool {
         raw_size += size_of::<Uint>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -400,6 +417,7 @@ impl IWlShmPool for WlShmPool {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -455,9 +473,11 @@ impl IWlShmPool for WlShmPool {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn destroy(&self) {
+        #[allow(unused)]
         let mut raw_size = 8;
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -472,6 +492,7 @@ impl IWlShmPool for WlShmPool {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -479,10 +500,12 @@ impl IWlShmPool for WlShmPool {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn resize(&self, size: Int) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Int>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -497,6 +520,7 @@ impl IWlShmPool for WlShmPool {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -519,13 +543,16 @@ pub struct WlShm {
     #[allow(dead_code)]
     pub socket: Arc<WaylandSocket>,
 }
-impl IWlShm for WlShm {
+impl IwlShm for WlShm {
     fn create_pool(&self, id: NewId, fd: Fd, size: Int) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<NewId>();
+        raw_size += size_of::<Fd>();
         raw_size += size_of::<Int>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -540,6 +567,7 @@ impl IWlShm for WlShm {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -573,11 +601,13 @@ pub struct WlBuffer {
     #[allow(dead_code)]
     pub socket: Arc<WaylandSocket>,
 }
-impl IWlBuffer for WlBuffer {
+impl IwlBuffer for WlBuffer {
     fn destroy(&self) {
+        #[allow(unused)]
         let mut raw_size = 8;
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -592,6 +622,7 @@ impl IWlBuffer for WlBuffer {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -606,13 +637,15 @@ pub struct WlDataOffer {
     #[allow(dead_code)]
     pub socket: Arc<WaylandSocket>,
 }
-impl IWlDataOffer for WlDataOffer {
+impl IwlDataOffer for WlDataOffer {
     fn accept(&self, serial: Uint, mime_type: String) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Uint>();
-        raw_size += ((mime_type.len() + 1) as f64 / 4.0).ceil() as usize * 4 + 4;
+        raw_size += size_of::<String>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -627,6 +660,7 @@ impl IWlDataOffer for WlDataOffer {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -657,10 +691,13 @@ impl IWlDataOffer for WlDataOffer {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn receive(&self, mime_type: String, fd: Fd) {
+        #[allow(unused)]
         let mut raw_size = 8;
-        raw_size += ((mime_type.len() + 1) as f64 / 4.0).ceil() as usize * 4 + 4;
+        raw_size += size_of::<String>();
+        raw_size += size_of::<Fd>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -675,6 +712,7 @@ impl IWlDataOffer for WlDataOffer {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         let str_len = mime_type.len();
         let buf_len = ((mime_type.len() + 1) as f64 / 4.0).ceil() as usize * 4;
@@ -700,9 +738,11 @@ impl IWlDataOffer for WlDataOffer {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn destroy(&self) {
+        #[allow(unused)]
         let mut raw_size = 8;
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -717,6 +757,7 @@ impl IWlDataOffer for WlDataOffer {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -724,9 +765,11 @@ impl IWlDataOffer for WlDataOffer {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn finish(&self) {
+        #[allow(unused)]
         let mut raw_size = 8;
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -741,6 +784,7 @@ impl IWlDataOffer for WlDataOffer {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -748,11 +792,13 @@ impl IWlDataOffer for WlDataOffer {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn set_actions(&self, dnd_actions: Uint, preferred_action: Uint) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Uint>();
         raw_size += size_of::<Uint>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -767,6 +813,7 @@ impl IWlDataOffer for WlDataOffer {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -797,12 +844,14 @@ pub struct WlDataSource {
     #[allow(dead_code)]
     pub socket: Arc<WaylandSocket>,
 }
-impl IWlDataSource for WlDataSource {
+impl IwlDataSource for WlDataSource {
     fn offer(&self, mime_type: String) {
+        #[allow(unused)]
         let mut raw_size = 8;
-        raw_size += ((mime_type.len() + 1) as f64 / 4.0).ceil() as usize * 4 + 4;
+        raw_size += size_of::<String>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -817,6 +866,7 @@ impl IWlDataSource for WlDataSource {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         let str_len = mime_type.len();
         let buf_len = ((mime_type.len() + 1) as f64 / 4.0).ceil() as usize * 4;
@@ -839,9 +889,11 @@ impl IWlDataSource for WlDataSource {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn destroy(&self) {
+        #[allow(unused)]
         let mut raw_size = 8;
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -856,6 +908,7 @@ impl IWlDataSource for WlDataSource {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -863,10 +916,12 @@ impl IWlDataSource for WlDataSource {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn set_actions(&self, dnd_actions: Uint) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Uint>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -881,6 +936,7 @@ impl IWlDataSource for WlDataSource {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -903,8 +959,9 @@ pub struct WlDataDevice {
     #[allow(dead_code)]
     pub socket: Arc<WaylandSocket>,
 }
-impl IWlDataDevice for WlDataDevice {
+impl IwlDataDevice for WlDataDevice {
     fn start_drag(&self, source: Object, origin: Object, icon: Object, serial: Uint) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Object>();
         raw_size += size_of::<Object>();
@@ -912,6 +969,7 @@ impl IWlDataDevice for WlDataDevice {
         raw_size += size_of::<Uint>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -926,6 +984,7 @@ impl IWlDataDevice for WlDataDevice {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -965,11 +1024,13 @@ impl IWlDataDevice for WlDataDevice {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn set_selection(&self, source: Object, serial: Uint) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Object>();
         raw_size += size_of::<Uint>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -984,6 +1045,7 @@ impl IWlDataDevice for WlDataDevice {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -1007,9 +1069,11 @@ impl IWlDataDevice for WlDataDevice {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn release(&self) {
+        #[allow(unused)]
         let mut raw_size = 8;
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -1024,6 +1088,7 @@ impl IWlDataDevice for WlDataDevice {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -1038,12 +1103,14 @@ pub struct WlDataDeviceManager {
     #[allow(dead_code)]
     pub socket: Arc<WaylandSocket>,
 }
-impl IWlDataDeviceManager for WlDataDeviceManager {
+impl IwlDataDeviceManager for WlDataDeviceManager {
     fn create_data_source(&self, id: NewId) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<NewId>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -1058,6 +1125,7 @@ impl IWlDataDeviceManager for WlDataDeviceManager {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -1073,11 +1141,13 @@ impl IWlDataDeviceManager for WlDataDeviceManager {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn get_data_device(&self, id: NewId, seat: Object) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<NewId>();
         raw_size += size_of::<Object>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -1092,6 +1162,7 @@ impl IWlDataDeviceManager for WlDataDeviceManager {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -1122,13 +1193,15 @@ pub struct WlShell {
     #[allow(dead_code)]
     pub socket: Arc<WaylandSocket>,
 }
-impl IWlShell for WlShell {
+impl IwlShell for WlShell {
     fn get_shell_surface(&self, id: NewId, surface: Object) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<NewId>();
         raw_size += size_of::<Object>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -1143,6 +1216,7 @@ impl IWlShell for WlShell {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -1173,12 +1247,14 @@ pub struct WlShellSurface {
     #[allow(dead_code)]
     pub socket: Arc<WaylandSocket>,
 }
-impl IWlShellSurface for WlShellSurface {
+impl IwlShellSurface for WlShellSurface {
     fn pong(&self, serial: Uint) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Uint>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -1193,6 +1269,7 @@ impl IWlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -1208,11 +1285,13 @@ impl IWlShellSurface for WlShellSurface {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn mv(&self, seat: Object, serial: Uint) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Object>();
         raw_size += size_of::<Uint>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -1227,6 +1306,7 @@ impl IWlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -1250,12 +1330,14 @@ impl IWlShellSurface for WlShellSurface {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn resize(&self, seat: Object, serial: Uint, edges: Uint) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Object>();
         raw_size += size_of::<Uint>();
         raw_size += size_of::<Uint>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -1270,6 +1352,7 @@ impl IWlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -1301,9 +1384,11 @@ impl IWlShellSurface for WlShellSurface {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn set_toplevel(&self) {
+        #[allow(unused)]
         let mut raw_size = 8;
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -1318,6 +1403,7 @@ impl IWlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -1325,6 +1411,7 @@ impl IWlShellSurface for WlShellSurface {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn set_transient(&self, parent: Object, x: Int, y: Int, flags: Uint) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Object>();
         raw_size += size_of::<Int>();
@@ -1332,6 +1419,7 @@ impl IWlShellSurface for WlShellSurface {
         raw_size += size_of::<Uint>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -1346,6 +1434,7 @@ impl IWlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -1385,12 +1474,14 @@ impl IWlShellSurface for WlShellSurface {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn set_fullscreen(&self, method: Uint, framerate: Uint, output: Object) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Uint>();
         raw_size += size_of::<Uint>();
         raw_size += size_of::<Object>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -1405,6 +1496,7 @@ impl IWlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -1436,6 +1528,7 @@ impl IWlShellSurface for WlShellSurface {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn set_popup(&self, seat: Object, serial: Uint, parent: Object, x: Int, y: Int, flags: Uint) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Object>();
         raw_size += size_of::<Uint>();
@@ -1445,6 +1538,7 @@ impl IWlShellSurface for WlShellSurface {
         raw_size += size_of::<Uint>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -1459,6 +1553,7 @@ impl IWlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -1514,10 +1609,12 @@ impl IWlShellSurface for WlShellSurface {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn set_maximized(&self, output: Object) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Object>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -1532,6 +1629,7 @@ impl IWlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -1547,10 +1645,12 @@ impl IWlShellSurface for WlShellSurface {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn set_title(&self, title: String) {
+        #[allow(unused)]
         let mut raw_size = 8;
-        raw_size += ((title.len() + 1) as f64 / 4.0).ceil() as usize * 4 + 4;
+        raw_size += size_of::<String>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -1565,6 +1665,7 @@ impl IWlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         let str_len = title.len();
         let buf_len = ((title.len() + 1) as f64 / 4.0).ceil() as usize * 4;
@@ -1587,10 +1688,12 @@ impl IWlShellSurface for WlShellSurface {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn set_class(&self, class_: String) {
+        #[allow(unused)]
         let mut raw_size = 8;
-        raw_size += ((class_.len() + 1) as f64 / 4.0).ceil() as usize * 4 + 4;
+        raw_size += size_of::<String>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -1605,6 +1708,7 @@ impl IWlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         let str_len = class_.len();
         let buf_len = ((class_.len() + 1) as f64 / 4.0).ceil() as usize * 4;
@@ -1634,11 +1738,13 @@ pub struct WlSurface {
     #[allow(dead_code)]
     pub socket: Arc<WaylandSocket>,
 }
-impl IWlSurface for WlSurface {
+impl IwlSurface for WlSurface {
     fn destroy(&self) {
+        #[allow(unused)]
         let mut raw_size = 8;
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -1653,6 +1759,7 @@ impl IWlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -1660,12 +1767,14 @@ impl IWlSurface for WlSurface {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn attach(&self, buffer: Object, x: Int, y: Int) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Object>();
         raw_size += size_of::<Int>();
         raw_size += size_of::<Int>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -1680,6 +1789,7 @@ impl IWlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -1711,6 +1821,7 @@ impl IWlSurface for WlSurface {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn damage(&self, x: Int, y: Int, width: Int, height: Int) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Int>();
         raw_size += size_of::<Int>();
@@ -1718,6 +1829,7 @@ impl IWlSurface for WlSurface {
         raw_size += size_of::<Int>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -1732,6 +1844,7 @@ impl IWlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -1771,10 +1884,12 @@ impl IWlSurface for WlSurface {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn frame(&self, callback: NewId) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<NewId>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -1789,6 +1904,7 @@ impl IWlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -1804,10 +1920,12 @@ impl IWlSurface for WlSurface {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn set_opaque_region(&self, region: Object) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Object>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -1822,6 +1940,7 @@ impl IWlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -1837,10 +1956,12 @@ impl IWlSurface for WlSurface {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn set_input_region(&self, region: Object) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Object>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -1855,6 +1976,7 @@ impl IWlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -1870,9 +1992,11 @@ impl IWlSurface for WlSurface {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn commit(&self) {
+        #[allow(unused)]
         let mut raw_size = 8;
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -1887,6 +2011,7 @@ impl IWlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -1894,10 +2019,12 @@ impl IWlSurface for WlSurface {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn set_buffer_transform(&self, transform: Int) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Int>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -1912,6 +2039,7 @@ impl IWlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -1927,10 +2055,12 @@ impl IWlSurface for WlSurface {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn set_buffer_scale(&self, scale: Int) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Int>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -1945,6 +2075,7 @@ impl IWlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -1960,6 +2091,7 @@ impl IWlSurface for WlSurface {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn damage_buffer(&self, x: Int, y: Int, width: Int, height: Int) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Int>();
         raw_size += size_of::<Int>();
@@ -1967,6 +2099,7 @@ impl IWlSurface for WlSurface {
         raw_size += size_of::<Int>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -1981,6 +2114,7 @@ impl IWlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -2027,12 +2161,14 @@ pub struct WlSeat {
     #[allow(dead_code)]
     pub socket: Arc<WaylandSocket>,
 }
-impl IWlSeat for WlSeat {
+impl IwlSeat for WlSeat {
     fn get_pointer(&self, id: NewId) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<NewId>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -2047,6 +2183,7 @@ impl IWlSeat for WlSeat {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -2062,10 +2199,12 @@ impl IWlSeat for WlSeat {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn get_keyboard(&self, id: NewId) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<NewId>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -2080,6 +2219,7 @@ impl IWlSeat for WlSeat {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -2095,10 +2235,12 @@ impl IWlSeat for WlSeat {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn get_touch(&self, id: NewId) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<NewId>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -2113,6 +2255,7 @@ impl IWlSeat for WlSeat {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -2128,9 +2271,11 @@ impl IWlSeat for WlSeat {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn release(&self) {
+        #[allow(unused)]
         let mut raw_size = 8;
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -2145,6 +2290,7 @@ impl IWlSeat for WlSeat {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -2159,8 +2305,9 @@ pub struct WlPointer {
     #[allow(dead_code)]
     pub socket: Arc<WaylandSocket>,
 }
-impl IWlPointer for WlPointer {
+impl IwlPointer for WlPointer {
     fn set_cursor(&self, serial: Uint, surface: Object, hotspot_x: Int, hotspot_y: Int) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Uint>();
         raw_size += size_of::<Object>();
@@ -2168,6 +2315,7 @@ impl IWlPointer for WlPointer {
         raw_size += size_of::<Int>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -2182,6 +2330,7 @@ impl IWlPointer for WlPointer {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -2221,9 +2370,11 @@ impl IWlPointer for WlPointer {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn release(&self) {
+        #[allow(unused)]
         let mut raw_size = 8;
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -2238,6 +2389,7 @@ impl IWlPointer for WlPointer {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -2252,11 +2404,13 @@ pub struct WlKeyboard {
     #[allow(dead_code)]
     pub socket: Arc<WaylandSocket>,
 }
-impl IWlKeyboard for WlKeyboard {
+impl IwlKeyboard for WlKeyboard {
     fn release(&self) {
+        #[allow(unused)]
         let mut raw_size = 8;
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -2271,6 +2425,7 @@ impl IWlKeyboard for WlKeyboard {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -2285,11 +2440,13 @@ pub struct WlTouch {
     #[allow(dead_code)]
     pub socket: Arc<WaylandSocket>,
 }
-impl IWlTouch for WlTouch {
+impl IwlTouch for WlTouch {
     fn release(&self) {
+        #[allow(unused)]
         let mut raw_size = 8;
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -2304,6 +2461,7 @@ impl IWlTouch for WlTouch {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -2318,11 +2476,13 @@ pub struct WlOutput {
     #[allow(dead_code)]
     pub socket: Arc<WaylandSocket>,
 }
-impl IWlOutput for WlOutput {
+impl IwlOutput for WlOutput {
     fn release(&self) {
+        #[allow(unused)]
         let mut raw_size = 8;
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -2337,6 +2497,7 @@ impl IWlOutput for WlOutput {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -2351,11 +2512,13 @@ pub struct WlRegion {
     #[allow(dead_code)]
     pub socket: Arc<WaylandSocket>,
 }
-impl IWlRegion for WlRegion {
+impl IwlRegion for WlRegion {
     fn destroy(&self) {
+        #[allow(unused)]
         let mut raw_size = 8;
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -2370,6 +2533,7 @@ impl IWlRegion for WlRegion {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -2377,6 +2541,7 @@ impl IWlRegion for WlRegion {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn add(&self, x: Int, y: Int, width: Int, height: Int) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Int>();
         raw_size += size_of::<Int>();
@@ -2384,6 +2549,7 @@ impl IWlRegion for WlRegion {
         raw_size += size_of::<Int>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -2398,6 +2564,7 @@ impl IWlRegion for WlRegion {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -2437,6 +2604,7 @@ impl IWlRegion for WlRegion {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn subtract(&self, x: Int, y: Int, width: Int, height: Int) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Int>();
         raw_size += size_of::<Int>();
@@ -2444,6 +2612,7 @@ impl IWlRegion for WlRegion {
         raw_size += size_of::<Int>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -2458,6 +2627,7 @@ impl IWlRegion for WlRegion {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -2504,11 +2674,13 @@ pub struct WlSubcompositor {
     #[allow(dead_code)]
     pub socket: Arc<WaylandSocket>,
 }
-impl IWlSubcompositor for WlSubcompositor {
+impl IwlSubcompositor for WlSubcompositor {
     fn destroy(&self) {
+        #[allow(unused)]
         let mut raw_size = 8;
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -2523,6 +2695,7 @@ impl IWlSubcompositor for WlSubcompositor {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -2530,12 +2703,14 @@ impl IWlSubcompositor for WlSubcompositor {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn get_subsurface(&self, id: NewId, surface: Object, parent: Object) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<NewId>();
         raw_size += size_of::<Object>();
         raw_size += size_of::<Object>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -2550,6 +2725,7 @@ impl IWlSubcompositor for WlSubcompositor {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -2588,11 +2764,13 @@ pub struct WlSubsurface {
     #[allow(dead_code)]
     pub socket: Arc<WaylandSocket>,
 }
-impl IWlSubsurface for WlSubsurface {
+impl IwlSubsurface for WlSubsurface {
     fn destroy(&self) {
+        #[allow(unused)]
         let mut raw_size = 8;
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -2607,6 +2785,7 @@ impl IWlSubsurface for WlSubsurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -2614,11 +2793,13 @@ impl IWlSubsurface for WlSubsurface {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn set_position(&self, x: Int, y: Int) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Int>();
         raw_size += size_of::<Int>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -2633,6 +2814,7 @@ impl IWlSubsurface for WlSubsurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -2656,10 +2838,12 @@ impl IWlSubsurface for WlSubsurface {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn place_above(&self, sibling: Object) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Object>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -2674,6 +2858,7 @@ impl IWlSubsurface for WlSubsurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -2689,10 +2874,12 @@ impl IWlSubsurface for WlSubsurface {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn place_below(&self, sibling: Object) {
+        #[allow(unused)]
         let mut raw_size = 8;
         raw_size += size_of::<Object>();
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -2707,6 +2894,7 @@ impl IWlSubsurface for WlSubsurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             std::ptr::copy(
@@ -2722,9 +2910,11 @@ impl IWlSubsurface for WlSubsurface {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn set_sync(&self) {
+        #[allow(unused)]
         let mut raw_size = 8;
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -2739,6 +2929,7 @@ impl IWlSubsurface for WlSubsurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -2746,9 +2937,11 @@ impl IWlSubsurface for WlSubsurface {
         self.socket.send(&send_buffer, &send_fd);
     }
     fn set_desync(&self) {
+        #[allow(unused)]
         let mut raw_size = 8;
         let mut send_buffer: Vec<u8> = vec![0; raw_size];
         let mut send_fd = vec![0; 16];
+        #[allow(unused)]
         let mut send_fd_num = 0;
         unsafe {
             std::ptr::copy(
@@ -2763,6 +2956,7 @@ impl IWlSubsurface for WlSubsurface {
                 1,
             );
         }
+        #[allow(unused)]
         let mut written_len: usize = 8;
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -3130,7 +3324,7 @@ impl WlRawObject for WlSubsurface {
         WlObject::WlSubsurface(self)
     }
 }
-pub struct WlDisplayErrorEvent {
+pub struct WlDisplayerrorEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3140,13 +3334,13 @@ pub struct WlDisplayErrorEvent {
     #[allow(dead_code)]
     pub message: String,
 }
-pub struct WlDisplayDeleteIdEvent {
+pub struct WlDisplaydeleteIdEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
     pub id: Uint,
 }
-pub struct WlRegistryGlobalEvent {
+pub struct WlRegistryglobalEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3156,53 +3350,53 @@ pub struct WlRegistryGlobalEvent {
     #[allow(dead_code)]
     pub version: Uint,
 }
-pub struct WlRegistryGlobalRemoveEvent {
+pub struct WlRegistryglobalRemoveEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
     pub name: Uint,
 }
-pub struct WlCallbackDoneEvent {
+pub struct WlCallbackdoneEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
     pub callback_data: Uint,
 }
-pub struct WlShmFormatEvent {
+pub struct WlShmformatEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
     pub format: Uint,
 }
-pub struct WlBufferReleaseEvent {
+pub struct WlBufferreleaseEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
 }
-pub struct WlDataOfferOfferEvent {
+pub struct WlDataOfferofferEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
     pub mime_type: String,
 }
-pub struct WlDataOfferSourceActionsEvent {
+pub struct WlDataOffersourceActionsEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
     pub source_actions: Uint,
 }
-pub struct WlDataOfferActionEvent {
+pub struct WlDataOfferactionEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
     pub dnd_action: Uint,
 }
-pub struct WlDataSourceTargetEvent {
+pub struct WlDataSourcetargetEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
     pub mime_type: String,
 }
-pub struct WlDataSourceSendEvent {
+pub struct WlDataSourcesendEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3210,31 +3404,31 @@ pub struct WlDataSourceSendEvent {
     #[allow(dead_code)]
     pub fd: Fd,
 }
-pub struct WlDataSourceCancelledEvent {
+pub struct WlDataSourcecancelledEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
 }
-pub struct WlDataSourceDndDropPerformedEvent {
+pub struct WlDataSourcedndDropPerformedEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
 }
-pub struct WlDataSourceDndFinishedEvent {
+pub struct WlDataSourcedndFinishedEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
 }
-pub struct WlDataSourceActionEvent {
+pub struct WlDataSourceactionEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
     pub dnd_action: Uint,
 }
-pub struct WlDataDeviceDataOfferEvent {
+pub struct WlDataDevicedataOfferEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
     pub id: NewId,
 }
-pub struct WlDataDeviceEnterEvent {
+pub struct WlDataDeviceenterEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3248,11 +3442,11 @@ pub struct WlDataDeviceEnterEvent {
     #[allow(dead_code)]
     pub id: Object,
 }
-pub struct WlDataDeviceLeaveEvent {
+pub struct WlDataDeviceleaveEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
 }
-pub struct WlDataDeviceMotionEvent {
+pub struct WlDataDevicemotionEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3262,23 +3456,23 @@ pub struct WlDataDeviceMotionEvent {
     #[allow(dead_code)]
     pub y: Fixed,
 }
-pub struct WlDataDeviceDropEvent {
+pub struct WlDataDevicedropEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
 }
-pub struct WlDataDeviceSelectionEvent {
+pub struct WlDataDeviceselectionEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
     pub id: Object,
 }
-pub struct WlShellSurfacePingEvent {
+pub struct WlShellSurfacepingEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
     pub serial: Uint,
 }
-pub struct WlShellSurfaceConfigureEvent {
+pub struct WlShellSurfaceconfigureEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3288,35 +3482,35 @@ pub struct WlShellSurfaceConfigureEvent {
     #[allow(dead_code)]
     pub height: Int,
 }
-pub struct WlShellSurfacePopupDoneEvent {
+pub struct WlShellSurfacepopupDoneEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
 }
-pub struct WlSurfaceEnterEvent {
-    #[allow(dead_code)]
-    pub sender_id: u32,
-    #[allow(dead_code)]
-    pub output: Object,
-}
-pub struct WlSurfaceLeaveEvent {
+pub struct WlSurfaceenterEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
     pub output: Object,
 }
-pub struct WlSeatCapabilitiesEvent {
+pub struct WlSurfaceleaveEvent {
+    #[allow(dead_code)]
+    pub sender_id: u32,
+    #[allow(dead_code)]
+    pub output: Object,
+}
+pub struct WlSeatcapabilitiesEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
     pub capabilities: Uint,
 }
-pub struct WlSeatNameEvent {
+pub struct WlSeatnameEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
     pub name: String,
 }
-pub struct WlPointerEnterEvent {
+pub struct WlPointerenterEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3328,7 +3522,7 @@ pub struct WlPointerEnterEvent {
     #[allow(dead_code)]
     pub surface_y: Fixed,
 }
-pub struct WlPointerLeaveEvent {
+pub struct WlPointerleaveEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3336,7 +3530,7 @@ pub struct WlPointerLeaveEvent {
     #[allow(dead_code)]
     pub surface: Object,
 }
-pub struct WlPointerMotionEvent {
+pub struct WlPointermotionEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3346,7 +3540,7 @@ pub struct WlPointerMotionEvent {
     #[allow(dead_code)]
     pub surface_y: Fixed,
 }
-pub struct WlPointerButtonEvent {
+pub struct WlPointerbuttonEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3358,7 +3552,7 @@ pub struct WlPointerButtonEvent {
     #[allow(dead_code)]
     pub state: Uint,
 }
-pub struct WlPointerAxisEvent {
+pub struct WlPointeraxisEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3368,17 +3562,17 @@ pub struct WlPointerAxisEvent {
     #[allow(dead_code)]
     pub value: Fixed,
 }
-pub struct WlPointerFrameEvent {
+pub struct WlPointerframeEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
 }
-pub struct WlPointerAxisSourceEvent {
+pub struct WlPointeraxisSourceEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
     pub axis_source: Uint,
 }
-pub struct WlPointerAxisStopEvent {
+pub struct WlPointeraxisStopEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3386,7 +3580,7 @@ pub struct WlPointerAxisStopEvent {
     #[allow(dead_code)]
     pub axis: Uint,
 }
-pub struct WlPointerAxisDiscreteEvent {
+pub struct WlPointeraxisDiscreteEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3394,7 +3588,7 @@ pub struct WlPointerAxisDiscreteEvent {
     #[allow(dead_code)]
     pub discrete: Int,
 }
-pub struct WlKeyboardKeymapEvent {
+pub struct WlKeyboardkeymapEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3404,7 +3598,7 @@ pub struct WlKeyboardKeymapEvent {
     #[allow(dead_code)]
     pub size: Uint,
 }
-pub struct WlKeyboardEnterEvent {
+pub struct WlKeyboardenterEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3414,7 +3608,7 @@ pub struct WlKeyboardEnterEvent {
     #[allow(dead_code)]
     pub keys: Array,
 }
-pub struct WlKeyboardLeaveEvent {
+pub struct WlKeyboardleaveEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3422,7 +3616,7 @@ pub struct WlKeyboardLeaveEvent {
     #[allow(dead_code)]
     pub surface: Object,
 }
-pub struct WlKeyboardKeyEvent {
+pub struct WlKeyboardkeyEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3434,7 +3628,7 @@ pub struct WlKeyboardKeyEvent {
     #[allow(dead_code)]
     pub state: Uint,
 }
-pub struct WlKeyboardModifiersEvent {
+pub struct WlKeyboardmodifiersEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3448,7 +3642,7 @@ pub struct WlKeyboardModifiersEvent {
     #[allow(dead_code)]
     pub group: Uint,
 }
-pub struct WlKeyboardRepeatInfoEvent {
+pub struct WlKeyboardrepeatInfoEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3456,7 +3650,7 @@ pub struct WlKeyboardRepeatInfoEvent {
     #[allow(dead_code)]
     pub delay: Int,
 }
-pub struct WlTouchDownEvent {
+pub struct WlTouchdownEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3472,7 +3666,7 @@ pub struct WlTouchDownEvent {
     #[allow(dead_code)]
     pub y: Fixed,
 }
-pub struct WlTouchUpEvent {
+pub struct WlTouchupEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3482,7 +3676,7 @@ pub struct WlTouchUpEvent {
     #[allow(dead_code)]
     pub id: Int,
 }
-pub struct WlTouchMotionEvent {
+pub struct WlTouchmotionEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3494,15 +3688,15 @@ pub struct WlTouchMotionEvent {
     #[allow(dead_code)]
     pub y: Fixed,
 }
-pub struct WlTouchFrameEvent {
+pub struct WlTouchframeEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
 }
-pub struct WlTouchCancelEvent {
+pub struct WlTouchcancelEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
 }
-pub struct WlTouchShapeEvent {
+pub struct WlTouchshapeEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3512,7 +3706,7 @@ pub struct WlTouchShapeEvent {
     #[allow(dead_code)]
     pub minor: Fixed,
 }
-pub struct WlTouchOrientationEvent {
+pub struct WlTouchorientationEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3520,7 +3714,7 @@ pub struct WlTouchOrientationEvent {
     #[allow(dead_code)]
     pub orientation: Fixed,
 }
-pub struct WlOutputGeometryEvent {
+pub struct WlOutputgeometryEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3540,7 +3734,7 @@ pub struct WlOutputGeometryEvent {
     #[allow(dead_code)]
     pub transform: Int,
 }
-pub struct WlOutputModeEvent {
+pub struct WlOutputmodeEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3552,11 +3746,11 @@ pub struct WlOutputModeEvent {
     #[allow(dead_code)]
     pub refresh: Int,
 }
-pub struct WlOutputDoneEvent {
+pub struct WlOutputdoneEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
 }
-pub struct WlOutputScaleEvent {
+pub struct WlOutputscaleEvent {
     #[allow(dead_code)]
     pub sender_id: u32,
     #[allow(dead_code)]
@@ -3564,19 +3758,19 @@ pub struct WlOutputScaleEvent {
 }
 #[allow(dead_code)]
 pub enum WlDisplayEvent {
-    WlDisplayErrorEvent(WlDisplayErrorEvent),
-    WlDisplayDeleteIdEvent(WlDisplayDeleteIdEvent),
+    WlDisplayerrorEvent(WlDisplayerrorEvent),
+    WlDisplaydeleteIdEvent(WlDisplaydeleteIdEvent),
     None,
 }
 #[allow(dead_code)]
 pub enum WlRegistryEvent {
-    WlRegistryGlobalEvent(WlRegistryGlobalEvent),
-    WlRegistryGlobalRemoveEvent(WlRegistryGlobalRemoveEvent),
+    WlRegistryglobalEvent(WlRegistryglobalEvent),
+    WlRegistryglobalRemoveEvent(WlRegistryglobalRemoveEvent),
     None,
 }
 #[allow(dead_code)]
 pub enum WlCallbackEvent {
-    WlCallbackDoneEvent(WlCallbackDoneEvent),
+    WlCallbackdoneEvent(WlCallbackdoneEvent),
     None,
 }
 #[allow(dead_code)]
@@ -3589,39 +3783,39 @@ pub enum WlShmPoolEvent {
 }
 #[allow(dead_code)]
 pub enum WlShmEvent {
-    WlShmFormatEvent(WlShmFormatEvent),
+    WlShmformatEvent(WlShmformatEvent),
     None,
 }
 #[allow(dead_code)]
 pub enum WlBufferEvent {
-    WlBufferReleaseEvent(WlBufferReleaseEvent),
+    WlBufferreleaseEvent(WlBufferreleaseEvent),
     None,
 }
 #[allow(dead_code)]
 pub enum WlDataOfferEvent {
-    WlDataOfferOfferEvent(WlDataOfferOfferEvent),
-    WlDataOfferSourceActionsEvent(WlDataOfferSourceActionsEvent),
-    WlDataOfferActionEvent(WlDataOfferActionEvent),
+    WlDataOfferofferEvent(WlDataOfferofferEvent),
+    WlDataOffersourceActionsEvent(WlDataOffersourceActionsEvent),
+    WlDataOfferactionEvent(WlDataOfferactionEvent),
     None,
 }
 #[allow(dead_code)]
 pub enum WlDataSourceEvent {
-    WlDataSourceTargetEvent(WlDataSourceTargetEvent),
-    WlDataSourceSendEvent(WlDataSourceSendEvent),
-    WlDataSourceCancelledEvent(WlDataSourceCancelledEvent),
-    WlDataSourceDndDropPerformedEvent(WlDataSourceDndDropPerformedEvent),
-    WlDataSourceDndFinishedEvent(WlDataSourceDndFinishedEvent),
-    WlDataSourceActionEvent(WlDataSourceActionEvent),
+    WlDataSourcetargetEvent(WlDataSourcetargetEvent),
+    WlDataSourcesendEvent(WlDataSourcesendEvent),
+    WlDataSourcecancelledEvent(WlDataSourcecancelledEvent),
+    WlDataSourcedndDropPerformedEvent(WlDataSourcedndDropPerformedEvent),
+    WlDataSourcedndFinishedEvent(WlDataSourcedndFinishedEvent),
+    WlDataSourceactionEvent(WlDataSourceactionEvent),
     None,
 }
 #[allow(dead_code)]
 pub enum WlDataDeviceEvent {
-    WlDataDeviceDataOfferEvent(WlDataDeviceDataOfferEvent),
-    WlDataDeviceEnterEvent(WlDataDeviceEnterEvent),
-    WlDataDeviceLeaveEvent(WlDataDeviceLeaveEvent),
-    WlDataDeviceMotionEvent(WlDataDeviceMotionEvent),
-    WlDataDeviceDropEvent(WlDataDeviceDropEvent),
-    WlDataDeviceSelectionEvent(WlDataDeviceSelectionEvent),
+    WlDataDevicedataOfferEvent(WlDataDevicedataOfferEvent),
+    WlDataDeviceenterEvent(WlDataDeviceenterEvent),
+    WlDataDeviceleaveEvent(WlDataDeviceleaveEvent),
+    WlDataDevicemotionEvent(WlDataDevicemotionEvent),
+    WlDataDevicedropEvent(WlDataDevicedropEvent),
+    WlDataDeviceselectionEvent(WlDataDeviceselectionEvent),
     None,
 }
 #[allow(dead_code)]
@@ -3634,63 +3828,63 @@ pub enum WlShellEvent {
 }
 #[allow(dead_code)]
 pub enum WlShellSurfaceEvent {
-    WlShellSurfacePingEvent(WlShellSurfacePingEvent),
-    WlShellSurfaceConfigureEvent(WlShellSurfaceConfigureEvent),
-    WlShellSurfacePopupDoneEvent(WlShellSurfacePopupDoneEvent),
+    WlShellSurfacepingEvent(WlShellSurfacepingEvent),
+    WlShellSurfaceconfigureEvent(WlShellSurfaceconfigureEvent),
+    WlShellSurfacepopupDoneEvent(WlShellSurfacepopupDoneEvent),
     None,
 }
 #[allow(dead_code)]
 pub enum WlSurfaceEvent {
-    WlSurfaceEnterEvent(WlSurfaceEnterEvent),
-    WlSurfaceLeaveEvent(WlSurfaceLeaveEvent),
+    WlSurfaceenterEvent(WlSurfaceenterEvent),
+    WlSurfaceleaveEvent(WlSurfaceleaveEvent),
     None,
 }
 #[allow(dead_code)]
 pub enum WlSeatEvent {
-    WlSeatCapabilitiesEvent(WlSeatCapabilitiesEvent),
-    WlSeatNameEvent(WlSeatNameEvent),
+    WlSeatcapabilitiesEvent(WlSeatcapabilitiesEvent),
+    WlSeatnameEvent(WlSeatnameEvent),
     None,
 }
 #[allow(dead_code)]
 pub enum WlPointerEvent {
-    WlPointerEnterEvent(WlPointerEnterEvent),
-    WlPointerLeaveEvent(WlPointerLeaveEvent),
-    WlPointerMotionEvent(WlPointerMotionEvent),
-    WlPointerButtonEvent(WlPointerButtonEvent),
-    WlPointerAxisEvent(WlPointerAxisEvent),
-    WlPointerFrameEvent(WlPointerFrameEvent),
-    WlPointerAxisSourceEvent(WlPointerAxisSourceEvent),
-    WlPointerAxisStopEvent(WlPointerAxisStopEvent),
-    WlPointerAxisDiscreteEvent(WlPointerAxisDiscreteEvent),
+    WlPointerenterEvent(WlPointerenterEvent),
+    WlPointerleaveEvent(WlPointerleaveEvent),
+    WlPointermotionEvent(WlPointermotionEvent),
+    WlPointerbuttonEvent(WlPointerbuttonEvent),
+    WlPointeraxisEvent(WlPointeraxisEvent),
+    WlPointerframeEvent(WlPointerframeEvent),
+    WlPointeraxisSourceEvent(WlPointeraxisSourceEvent),
+    WlPointeraxisStopEvent(WlPointeraxisStopEvent),
+    WlPointeraxisDiscreteEvent(WlPointeraxisDiscreteEvent),
     None,
 }
 #[allow(dead_code)]
 pub enum WlKeyboardEvent {
-    WlKeyboardKeymapEvent(WlKeyboardKeymapEvent),
-    WlKeyboardEnterEvent(WlKeyboardEnterEvent),
-    WlKeyboardLeaveEvent(WlKeyboardLeaveEvent),
-    WlKeyboardKeyEvent(WlKeyboardKeyEvent),
-    WlKeyboardModifiersEvent(WlKeyboardModifiersEvent),
-    WlKeyboardRepeatInfoEvent(WlKeyboardRepeatInfoEvent),
+    WlKeyboardkeymapEvent(WlKeyboardkeymapEvent),
+    WlKeyboardenterEvent(WlKeyboardenterEvent),
+    WlKeyboardleaveEvent(WlKeyboardleaveEvent),
+    WlKeyboardkeyEvent(WlKeyboardkeyEvent),
+    WlKeyboardmodifiersEvent(WlKeyboardmodifiersEvent),
+    WlKeyboardrepeatInfoEvent(WlKeyboardrepeatInfoEvent),
     None,
 }
 #[allow(dead_code)]
 pub enum WlTouchEvent {
-    WlTouchDownEvent(WlTouchDownEvent),
-    WlTouchUpEvent(WlTouchUpEvent),
-    WlTouchMotionEvent(WlTouchMotionEvent),
-    WlTouchFrameEvent(WlTouchFrameEvent),
-    WlTouchCancelEvent(WlTouchCancelEvent),
-    WlTouchShapeEvent(WlTouchShapeEvent),
-    WlTouchOrientationEvent(WlTouchOrientationEvent),
+    WlTouchdownEvent(WlTouchdownEvent),
+    WlTouchupEvent(WlTouchupEvent),
+    WlTouchmotionEvent(WlTouchmotionEvent),
+    WlTouchframeEvent(WlTouchframeEvent),
+    WlTouchcancelEvent(WlTouchcancelEvent),
+    WlTouchshapeEvent(WlTouchshapeEvent),
+    WlTouchorientationEvent(WlTouchorientationEvent),
     None,
 }
 #[allow(dead_code)]
 pub enum WlOutputEvent {
-    WlOutputGeometryEvent(WlOutputGeometryEvent),
-    WlOutputModeEvent(WlOutputModeEvent),
-    WlOutputDoneEvent(WlOutputDoneEvent),
-    WlOutputScaleEvent(WlOutputScaleEvent),
+    WlOutputgeometryEvent(WlOutputgeometryEvent),
+    WlOutputmodeEvent(WlOutputmodeEvent),
+    WlOutputdoneEvent(WlOutputdoneEvent),
+    WlOutputscaleEvent(WlOutputscaleEvent),
     None,
 }
 #[allow(dead_code)]
@@ -3805,6 +3999,7 @@ impl WlObject {
             WlObject::WlDisplay(_obj) => Event::WlDisplayEvent(match op_code {
                 0u16 => {
                     info!("Receive event {}", "WlDisplayErrorEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Object>();
                     let start = parsed_len - size_of::<Object>();
@@ -3830,7 +4025,7 @@ impl WlObject {
                         .unwrap()
                         .trim_matches('\0')
                         .to_string();
-                    WlDisplayEvent::WlDisplayErrorEvent(WlDisplayErrorEvent {
+                    WlDisplayEvent::WlDisplayerrorEvent(WlDisplayerrorEvent {
                         sender_id,
                         object_id,
                         code,
@@ -3839,12 +4034,13 @@ impl WlObject {
                 }
                 1u16 => {
                     info!("Receive event {}", "WlDisplayDeleteIdEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Uint;
                     let id = unsafe { *raw_ptr };
-                    WlDisplayEvent::WlDisplayDeleteIdEvent(WlDisplayDeleteIdEvent { sender_id, id })
+                    WlDisplayEvent::WlDisplaydeleteIdEvent(WlDisplaydeleteIdEvent { sender_id, id })
                 }
                 _ => {
                     warn!("No such op_code");
@@ -3854,6 +4050,7 @@ impl WlObject {
             WlObject::WlRegistry(_obj) => Event::WlRegistryEvent(match op_code {
                 0u16 => {
                     info!("Receive event {}", "WlRegistryGlobalEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
@@ -3879,7 +4076,7 @@ impl WlObject {
                     let start = parsed_len - size_of::<Uint>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Uint;
                     let version = unsafe { *raw_ptr };
-                    WlRegistryEvent::WlRegistryGlobalEvent(WlRegistryGlobalEvent {
+                    WlRegistryEvent::WlRegistryglobalEvent(WlRegistryglobalEvent {
                         sender_id,
                         name,
                         interface,
@@ -3888,12 +4085,13 @@ impl WlObject {
                 }
                 1u16 => {
                     info!("Receive event {}", "WlRegistryGlobalRemoveEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Uint;
                     let name = unsafe { *raw_ptr };
-                    WlRegistryEvent::WlRegistryGlobalRemoveEvent(WlRegistryGlobalRemoveEvent {
+                    WlRegistryEvent::WlRegistryglobalRemoveEvent(WlRegistryglobalRemoveEvent {
                         sender_id,
                         name,
                     })
@@ -3906,12 +4104,13 @@ impl WlObject {
             WlObject::WlCallback(_obj) => Event::WlCallbackEvent(match op_code {
                 0u16 => {
                     info!("Receive event {}", "WlCallbackDoneEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Uint;
                     let callback_data = unsafe { *raw_ptr };
-                    WlCallbackEvent::WlCallbackDoneEvent(WlCallbackDoneEvent {
+                    WlCallbackEvent::WlCallbackdoneEvent(WlCallbackdoneEvent {
                         sender_id,
                         callback_data,
                     })
@@ -3936,12 +4135,13 @@ impl WlObject {
             WlObject::WlShm(_obj) => Event::WlShmEvent(match op_code {
                 0u16 => {
                     info!("Receive event {}", "WlShmFormatEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Uint;
                     let format = unsafe { *raw_ptr };
-                    WlShmEvent::WlShmFormatEvent(WlShmFormatEvent { sender_id, format })
+                    WlShmEvent::WlShmformatEvent(WlShmformatEvent { sender_id, format })
                 }
                 _ => {
                     warn!("No such op_code");
@@ -3951,8 +4151,9 @@ impl WlObject {
             WlObject::WlBuffer(_obj) => Event::WlBufferEvent(match op_code {
                 0u16 => {
                     info!("Receive event {}", "WlBufferReleaseEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
-                    WlBufferEvent::WlBufferReleaseEvent(WlBufferReleaseEvent { sender_id })
+                    WlBufferEvent::WlBufferreleaseEvent(WlBufferreleaseEvent { sender_id })
                 }
                 _ => {
                     warn!("No such op_code");
@@ -3962,6 +4163,7 @@ impl WlObject {
             WlObject::WlDataOffer(_obj) => Event::WlDataOfferEvent(match op_code {
                 0u16 => {
                     info!("Receive event {}", "WlDataOfferOfferEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<u32>();
                     let start = parsed_len - size_of::<u32>();
@@ -3979,31 +4181,33 @@ impl WlObject {
                         .unwrap()
                         .trim_matches('\0')
                         .to_string();
-                    WlDataOfferEvent::WlDataOfferOfferEvent(WlDataOfferOfferEvent {
+                    WlDataOfferEvent::WlDataOfferofferEvent(WlDataOfferofferEvent {
                         sender_id,
                         mime_type,
                     })
                 }
                 1u16 => {
                     info!("Receive event {}", "WlDataOfferSourceActionsEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Uint;
                     let source_actions = unsafe { *raw_ptr };
-                    WlDataOfferEvent::WlDataOfferSourceActionsEvent(WlDataOfferSourceActionsEvent {
+                    WlDataOfferEvent::WlDataOffersourceActionsEvent(WlDataOffersourceActionsEvent {
                         sender_id,
                         source_actions,
                     })
                 }
                 2u16 => {
                     info!("Receive event {}", "WlDataOfferActionEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Uint;
                     let dnd_action = unsafe { *raw_ptr };
-                    WlDataOfferEvent::WlDataOfferActionEvent(WlDataOfferActionEvent {
+                    WlDataOfferEvent::WlDataOfferactionEvent(WlDataOfferactionEvent {
                         sender_id,
                         dnd_action,
                     })
@@ -4016,6 +4220,7 @@ impl WlObject {
             WlObject::WlDataSource(_obj) => Event::WlDataSourceEvent(match op_code {
                 0u16 => {
                     info!("Receive event {}", "WlDataSourceTargetEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<u32>();
                     let start = parsed_len - size_of::<u32>();
@@ -4033,13 +4238,14 @@ impl WlObject {
                         .unwrap()
                         .trim_matches('\0')
                         .to_string();
-                    WlDataSourceEvent::WlDataSourceTargetEvent(WlDataSourceTargetEvent {
+                    WlDataSourceEvent::WlDataSourcetargetEvent(WlDataSourcetargetEvent {
                         sender_id,
                         mime_type,
                     })
                 }
                 1u16 => {
                     info!("Receive event {}", "WlDataSourceSendEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<u32>();
                     let start = parsed_len - size_of::<u32>();
@@ -4061,7 +4267,7 @@ impl WlObject {
                     let start = parsed_len - size_of::<Fd>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Fd;
                     let fd = unsafe { *raw_ptr };
-                    WlDataSourceEvent::WlDataSourceSendEvent(WlDataSourceSendEvent {
+                    WlDataSourceEvent::WlDataSourcesendEvent(WlDataSourcesendEvent {
                         sender_id,
                         mime_type,
                         fd,
@@ -4069,33 +4275,37 @@ impl WlObject {
                 }
                 2u16 => {
                     info!("Receive event {}", "WlDataSourceCancelledEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
-                    WlDataSourceEvent::WlDataSourceCancelledEvent(WlDataSourceCancelledEvent {
+                    WlDataSourceEvent::WlDataSourcecancelledEvent(WlDataSourcecancelledEvent {
                         sender_id,
                     })
                 }
                 3u16 => {
                     info!("Receive event {}", "WlDataSourceDndDropPerformedEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
-                    WlDataSourceEvent::WlDataSourceDndDropPerformedEvent(
-                        WlDataSourceDndDropPerformedEvent { sender_id },
+                    WlDataSourceEvent::WlDataSourcedndDropPerformedEvent(
+                        WlDataSourcedndDropPerformedEvent { sender_id },
                     )
                 }
                 4u16 => {
                     info!("Receive event {}", "WlDataSourceDndFinishedEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
-                    WlDataSourceEvent::WlDataSourceDndFinishedEvent(WlDataSourceDndFinishedEvent {
+                    WlDataSourceEvent::WlDataSourcedndFinishedEvent(WlDataSourcedndFinishedEvent {
                         sender_id,
                     })
                 }
                 5u16 => {
                     info!("Receive event {}", "WlDataSourceActionEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Uint;
                     let dnd_action = unsafe { *raw_ptr };
-                    WlDataSourceEvent::WlDataSourceActionEvent(WlDataSourceActionEvent {
+                    WlDataSourceEvent::WlDataSourceactionEvent(WlDataSourceactionEvent {
                         sender_id,
                         dnd_action,
                     })
@@ -4108,18 +4318,20 @@ impl WlObject {
             WlObject::WlDataDevice(_obj) => Event::WlDataDeviceEvent(match op_code {
                 0u16 => {
                     info!("Receive event {}", "WlDataDeviceDataOfferEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<NewId>();
                     let start = parsed_len - size_of::<NewId>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const NewId;
                     let id = unsafe { *raw_ptr };
-                    WlDataDeviceEvent::WlDataDeviceDataOfferEvent(WlDataDeviceDataOfferEvent {
+                    WlDataDeviceEvent::WlDataDevicedataOfferEvent(WlDataDevicedataOfferEvent {
                         sender_id,
                         id,
                     })
                 }
                 1u16 => {
                     info!("Receive event {}", "WlDataDeviceEnterEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
@@ -4137,7 +4349,7 @@ impl WlObject {
                     let start = parsed_len - size_of::<Object>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Object;
                     let id = unsafe { *raw_ptr };
-                    WlDataDeviceEvent::WlDataDeviceEnterEvent(WlDataDeviceEnterEvent {
+                    WlDataDeviceEvent::WlDataDeviceenterEvent(WlDataDeviceenterEvent {
                         sender_id,
                         serial,
                         surface,
@@ -4148,11 +4360,13 @@ impl WlObject {
                 }
                 2u16 => {
                     info!("Receive event {}", "WlDataDeviceLeaveEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
-                    WlDataDeviceEvent::WlDataDeviceLeaveEvent(WlDataDeviceLeaveEvent { sender_id })
+                    WlDataDeviceEvent::WlDataDeviceleaveEvent(WlDataDeviceleaveEvent { sender_id })
                 }
                 3u16 => {
                     info!("Receive event {}", "WlDataDeviceMotionEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
@@ -4162,7 +4376,7 @@ impl WlObject {
                     unimplemented!();
                     let y: f32 = 0.0;
                     unimplemented!();
-                    WlDataDeviceEvent::WlDataDeviceMotionEvent(WlDataDeviceMotionEvent {
+                    WlDataDeviceEvent::WlDataDevicemotionEvent(WlDataDevicemotionEvent {
                         sender_id,
                         time,
                         x,
@@ -4171,17 +4385,19 @@ impl WlObject {
                 }
                 4u16 => {
                     info!("Receive event {}", "WlDataDeviceDropEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
-                    WlDataDeviceEvent::WlDataDeviceDropEvent(WlDataDeviceDropEvent { sender_id })
+                    WlDataDeviceEvent::WlDataDevicedropEvent(WlDataDevicedropEvent { sender_id })
                 }
                 5u16 => {
                     info!("Receive event {}", "WlDataDeviceSelectionEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Object>();
                     let start = parsed_len - size_of::<Object>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Object;
                     let id = unsafe { *raw_ptr };
-                    WlDataDeviceEvent::WlDataDeviceSelectionEvent(WlDataDeviceSelectionEvent {
+                    WlDataDeviceEvent::WlDataDeviceselectionEvent(WlDataDeviceselectionEvent {
                         sender_id,
                         id,
                     })
@@ -4206,18 +4422,20 @@ impl WlObject {
             WlObject::WlShellSurface(_obj) => Event::WlShellSurfaceEvent(match op_code {
                 0u16 => {
                     info!("Receive event {}", "WlShellSurfacePingEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Uint;
                     let serial = unsafe { *raw_ptr };
-                    WlShellSurfaceEvent::WlShellSurfacePingEvent(WlShellSurfacePingEvent {
+                    WlShellSurfaceEvent::WlShellSurfacepingEvent(WlShellSurfacepingEvent {
                         sender_id,
                         serial,
                     })
                 }
                 1u16 => {
                     info!("Receive event {}", "WlShellSurfaceConfigureEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
@@ -4231,8 +4449,8 @@ impl WlObject {
                     let start = parsed_len - size_of::<Int>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Int;
                     let height = unsafe { *raw_ptr };
-                    WlShellSurfaceEvent::WlShellSurfaceConfigureEvent(
-                        WlShellSurfaceConfigureEvent {
+                    WlShellSurfaceEvent::WlShellSurfaceconfigureEvent(
+                        WlShellSurfaceconfigureEvent {
                             sender_id,
                             edges,
                             width,
@@ -4242,9 +4460,10 @@ impl WlObject {
                 }
                 2u16 => {
                     info!("Receive event {}", "WlShellSurfacePopupDoneEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
-                    WlShellSurfaceEvent::WlShellSurfacePopupDoneEvent(
-                        WlShellSurfacePopupDoneEvent { sender_id },
+                    WlShellSurfaceEvent::WlShellSurfacepopupDoneEvent(
+                        WlShellSurfacepopupDoneEvent { sender_id },
                     )
                 }
                 _ => {
@@ -4255,21 +4474,23 @@ impl WlObject {
             WlObject::WlSurface(_obj) => Event::WlSurfaceEvent(match op_code {
                 0u16 => {
                     info!("Receive event {}", "WlSurfaceEnterEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Object>();
                     let start = parsed_len - size_of::<Object>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Object;
                     let output = unsafe { *raw_ptr };
-                    WlSurfaceEvent::WlSurfaceEnterEvent(WlSurfaceEnterEvent { sender_id, output })
+                    WlSurfaceEvent::WlSurfaceenterEvent(WlSurfaceenterEvent { sender_id, output })
                 }
                 1u16 => {
                     info!("Receive event {}", "WlSurfaceLeaveEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Object>();
                     let start = parsed_len - size_of::<Object>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Object;
                     let output = unsafe { *raw_ptr };
-                    WlSurfaceEvent::WlSurfaceLeaveEvent(WlSurfaceLeaveEvent { sender_id, output })
+                    WlSurfaceEvent::WlSurfaceleaveEvent(WlSurfaceleaveEvent { sender_id, output })
                 }
                 _ => {
                     warn!("No such op_code");
@@ -4279,18 +4500,20 @@ impl WlObject {
             WlObject::WlSeat(_obj) => Event::WlSeatEvent(match op_code {
                 0u16 => {
                     info!("Receive event {}", "WlSeatCapabilitiesEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Uint;
                     let capabilities = unsafe { *raw_ptr };
-                    WlSeatEvent::WlSeatCapabilitiesEvent(WlSeatCapabilitiesEvent {
+                    WlSeatEvent::WlSeatcapabilitiesEvent(WlSeatcapabilitiesEvent {
                         sender_id,
                         capabilities,
                     })
                 }
                 1u16 => {
                     info!("Receive event {}", "WlSeatNameEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<u32>();
                     let start = parsed_len - size_of::<u32>();
@@ -4308,7 +4531,7 @@ impl WlObject {
                         .unwrap()
                         .trim_matches('\0')
                         .to_string();
-                    WlSeatEvent::WlSeatNameEvent(WlSeatNameEvent { sender_id, name })
+                    WlSeatEvent::WlSeatnameEvent(WlSeatnameEvent { sender_id, name })
                 }
                 _ => {
                     warn!("No such op_code");
@@ -4318,6 +4541,7 @@ impl WlObject {
             WlObject::WlPointer(_obj) => Event::WlPointerEvent(match op_code {
                 0u16 => {
                     info!("Receive event {}", "WlPointerEnterEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
@@ -4331,7 +4555,7 @@ impl WlObject {
                     unimplemented!();
                     let surface_y: f32 = 0.0;
                     unimplemented!();
-                    WlPointerEvent::WlPointerEnterEvent(WlPointerEnterEvent {
+                    WlPointerEvent::WlPointerenterEvent(WlPointerenterEvent {
                         sender_id,
                         serial,
                         surface,
@@ -4341,6 +4565,7 @@ impl WlObject {
                 }
                 1u16 => {
                     info!("Receive event {}", "WlPointerLeaveEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
@@ -4350,7 +4575,7 @@ impl WlObject {
                     let start = parsed_len - size_of::<Object>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Object;
                     let surface = unsafe { *raw_ptr };
-                    WlPointerEvent::WlPointerLeaveEvent(WlPointerLeaveEvent {
+                    WlPointerEvent::WlPointerleaveEvent(WlPointerleaveEvent {
                         sender_id,
                         serial,
                         surface,
@@ -4358,6 +4583,7 @@ impl WlObject {
                 }
                 2u16 => {
                     info!("Receive event {}", "WlPointerMotionEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
@@ -4367,7 +4593,7 @@ impl WlObject {
                     unimplemented!();
                     let surface_y: f32 = 0.0;
                     unimplemented!();
-                    WlPointerEvent::WlPointerMotionEvent(WlPointerMotionEvent {
+                    WlPointerEvent::WlPointermotionEvent(WlPointermotionEvent {
                         sender_id,
                         time,
                         surface_x,
@@ -4376,6 +4602,7 @@ impl WlObject {
                 }
                 3u16 => {
                     info!("Receive event {}", "WlPointerButtonEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
@@ -4393,7 +4620,7 @@ impl WlObject {
                     let start = parsed_len - size_of::<Uint>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Uint;
                     let state = unsafe { *raw_ptr };
-                    WlPointerEvent::WlPointerButtonEvent(WlPointerButtonEvent {
+                    WlPointerEvent::WlPointerbuttonEvent(WlPointerbuttonEvent {
                         sender_id,
                         serial,
                         time,
@@ -4403,6 +4630,7 @@ impl WlObject {
                 }
                 4u16 => {
                     info!("Receive event {}", "WlPointerAxisEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
@@ -4414,7 +4642,7 @@ impl WlObject {
                     let axis = unsafe { *raw_ptr };
                     let value: f32 = 0.0;
                     unimplemented!();
-                    WlPointerEvent::WlPointerAxisEvent(WlPointerAxisEvent {
+                    WlPointerEvent::WlPointeraxisEvent(WlPointeraxisEvent {
                         sender_id,
                         time,
                         axis,
@@ -4423,23 +4651,26 @@ impl WlObject {
                 }
                 5u16 => {
                     info!("Receive event {}", "WlPointerFrameEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
-                    WlPointerEvent::WlPointerFrameEvent(WlPointerFrameEvent { sender_id })
+                    WlPointerEvent::WlPointerframeEvent(WlPointerframeEvent { sender_id })
                 }
                 6u16 => {
                     info!("Receive event {}", "WlPointerAxisSourceEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Uint;
                     let axis_source = unsafe { *raw_ptr };
-                    WlPointerEvent::WlPointerAxisSourceEvent(WlPointerAxisSourceEvent {
+                    WlPointerEvent::WlPointeraxisSourceEvent(WlPointeraxisSourceEvent {
                         sender_id,
                         axis_source,
                     })
                 }
                 7u16 => {
                     info!("Receive event {}", "WlPointerAxisStopEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
@@ -4449,7 +4680,7 @@ impl WlObject {
                     let start = parsed_len - size_of::<Uint>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Uint;
                     let axis = unsafe { *raw_ptr };
-                    WlPointerEvent::WlPointerAxisStopEvent(WlPointerAxisStopEvent {
+                    WlPointerEvent::WlPointeraxisStopEvent(WlPointeraxisStopEvent {
                         sender_id,
                         time,
                         axis,
@@ -4457,6 +4688,7 @@ impl WlObject {
                 }
                 8u16 => {
                     info!("Receive event {}", "WlPointerAxisDiscreteEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
@@ -4466,7 +4698,7 @@ impl WlObject {
                     let start = parsed_len - size_of::<Int>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Int;
                     let discrete = unsafe { *raw_ptr };
-                    WlPointerEvent::WlPointerAxisDiscreteEvent(WlPointerAxisDiscreteEvent {
+                    WlPointerEvent::WlPointeraxisDiscreteEvent(WlPointeraxisDiscreteEvent {
                         sender_id,
                         axis,
                         discrete,
@@ -4480,6 +4712,7 @@ impl WlObject {
             WlObject::WlKeyboard(_obj) => Event::WlKeyboardEvent(match op_code {
                 0u16 => {
                     info!("Receive event {}", "WlKeyboardKeymapEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
@@ -4493,7 +4726,7 @@ impl WlObject {
                     let start = parsed_len - size_of::<Uint>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Uint;
                     let size = unsafe { *raw_ptr };
-                    WlKeyboardEvent::WlKeyboardKeymapEvent(WlKeyboardKeymapEvent {
+                    WlKeyboardEvent::WlKeyboardkeymapEvent(WlKeyboardkeymapEvent {
                         sender_id,
                         format,
                         fd,
@@ -4502,6 +4735,7 @@ impl WlObject {
                 }
                 1u16 => {
                     info!("Receive event {}", "WlKeyboardEnterEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
@@ -4513,7 +4747,7 @@ impl WlObject {
                     let surface = unsafe { *raw_ptr };
                     let keys: Vec<u32> = Vec::new();
                     unimplemented!();
-                    WlKeyboardEvent::WlKeyboardEnterEvent(WlKeyboardEnterEvent {
+                    WlKeyboardEvent::WlKeyboardenterEvent(WlKeyboardenterEvent {
                         sender_id,
                         serial,
                         surface,
@@ -4522,6 +4756,7 @@ impl WlObject {
                 }
                 2u16 => {
                     info!("Receive event {}", "WlKeyboardLeaveEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
@@ -4531,7 +4766,7 @@ impl WlObject {
                     let start = parsed_len - size_of::<Object>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Object;
                     let surface = unsafe { *raw_ptr };
-                    WlKeyboardEvent::WlKeyboardLeaveEvent(WlKeyboardLeaveEvent {
+                    WlKeyboardEvent::WlKeyboardleaveEvent(WlKeyboardleaveEvent {
                         sender_id,
                         serial,
                         surface,
@@ -4539,6 +4774,7 @@ impl WlObject {
                 }
                 3u16 => {
                     info!("Receive event {}", "WlKeyboardKeyEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
@@ -4556,7 +4792,7 @@ impl WlObject {
                     let start = parsed_len - size_of::<Uint>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Uint;
                     let state = unsafe { *raw_ptr };
-                    WlKeyboardEvent::WlKeyboardKeyEvent(WlKeyboardKeyEvent {
+                    WlKeyboardEvent::WlKeyboardkeyEvent(WlKeyboardkeyEvent {
                         sender_id,
                         serial,
                         time,
@@ -4566,6 +4802,7 @@ impl WlObject {
                 }
                 4u16 => {
                     info!("Receive event {}", "WlKeyboardModifiersEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
@@ -4587,7 +4824,7 @@ impl WlObject {
                     let start = parsed_len - size_of::<Uint>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Uint;
                     let group = unsafe { *raw_ptr };
-                    WlKeyboardEvent::WlKeyboardModifiersEvent(WlKeyboardModifiersEvent {
+                    WlKeyboardEvent::WlKeyboardmodifiersEvent(WlKeyboardmodifiersEvent {
                         sender_id,
                         serial,
                         mods_depressed,
@@ -4598,6 +4835,7 @@ impl WlObject {
                 }
                 5u16 => {
                     info!("Receive event {}", "WlKeyboardRepeatInfoEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Int>();
                     let start = parsed_len - size_of::<Int>();
@@ -4607,7 +4845,7 @@ impl WlObject {
                     let start = parsed_len - size_of::<Int>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Int;
                     let delay = unsafe { *raw_ptr };
-                    WlKeyboardEvent::WlKeyboardRepeatInfoEvent(WlKeyboardRepeatInfoEvent {
+                    WlKeyboardEvent::WlKeyboardrepeatInfoEvent(WlKeyboardrepeatInfoEvent {
                         sender_id,
                         rate,
                         delay,
@@ -4621,6 +4859,7 @@ impl WlObject {
             WlObject::WlTouch(_obj) => Event::WlTouchEvent(match op_code {
                 0u16 => {
                     info!("Receive event {}", "WlTouchDownEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
@@ -4642,7 +4881,7 @@ impl WlObject {
                     unimplemented!();
                     let y: f32 = 0.0;
                     unimplemented!();
-                    WlTouchEvent::WlTouchDownEvent(WlTouchDownEvent {
+                    WlTouchEvent::WlTouchdownEvent(WlTouchdownEvent {
                         sender_id,
                         serial,
                         time,
@@ -4654,6 +4893,7 @@ impl WlObject {
                 }
                 1u16 => {
                     info!("Receive event {}", "WlTouchUpEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
@@ -4667,7 +4907,7 @@ impl WlObject {
                     let start = parsed_len - size_of::<Int>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Int;
                     let id = unsafe { *raw_ptr };
-                    WlTouchEvent::WlTouchUpEvent(WlTouchUpEvent {
+                    WlTouchEvent::WlTouchupEvent(WlTouchupEvent {
                         sender_id,
                         serial,
                         time,
@@ -4676,6 +4916,7 @@ impl WlObject {
                 }
                 2u16 => {
                     info!("Receive event {}", "WlTouchMotionEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
@@ -4689,7 +4930,7 @@ impl WlObject {
                     unimplemented!();
                     let y: f32 = 0.0;
                     unimplemented!();
-                    WlTouchEvent::WlTouchMotionEvent(WlTouchMotionEvent {
+                    WlTouchEvent::WlTouchmotionEvent(WlTouchmotionEvent {
                         sender_id,
                         time,
                         id,
@@ -4699,16 +4940,19 @@ impl WlObject {
                 }
                 3u16 => {
                     info!("Receive event {}", "WlTouchFrameEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
-                    WlTouchEvent::WlTouchFrameEvent(WlTouchFrameEvent { sender_id })
+                    WlTouchEvent::WlTouchframeEvent(WlTouchframeEvent { sender_id })
                 }
                 4u16 => {
                     info!("Receive event {}", "WlTouchCancelEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
-                    WlTouchEvent::WlTouchCancelEvent(WlTouchCancelEvent { sender_id })
+                    WlTouchEvent::WlTouchcancelEvent(WlTouchcancelEvent { sender_id })
                 }
                 5u16 => {
                     info!("Receive event {}", "WlTouchShapeEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Int>();
                     let start = parsed_len - size_of::<Int>();
@@ -4718,7 +4962,7 @@ impl WlObject {
                     unimplemented!();
                     let minor: f32 = 0.0;
                     unimplemented!();
-                    WlTouchEvent::WlTouchShapeEvent(WlTouchShapeEvent {
+                    WlTouchEvent::WlTouchshapeEvent(WlTouchshapeEvent {
                         sender_id,
                         id,
                         major,
@@ -4727,6 +4971,7 @@ impl WlObject {
                 }
                 6u16 => {
                     info!("Receive event {}", "WlTouchOrientationEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Int>();
                     let start = parsed_len - size_of::<Int>();
@@ -4734,7 +4979,7 @@ impl WlObject {
                     let id = unsafe { *raw_ptr };
                     let orientation: f32 = 0.0;
                     unimplemented!();
-                    WlTouchEvent::WlTouchOrientationEvent(WlTouchOrientationEvent {
+                    WlTouchEvent::WlTouchorientationEvent(WlTouchorientationEvent {
                         sender_id,
                         id,
                         orientation,
@@ -4748,6 +4993,7 @@ impl WlObject {
             WlObject::WlOutput(_obj) => Event::WlOutputEvent(match op_code {
                 0u16 => {
                     info!("Receive event {}", "WlOutputGeometryEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Int>();
                     let start = parsed_len - size_of::<Int>();
@@ -4805,7 +5051,7 @@ impl WlObject {
                     let start = parsed_len - size_of::<Int>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Int;
                     let transform = unsafe { *raw_ptr };
-                    WlOutputEvent::WlOutputGeometryEvent(WlOutputGeometryEvent {
+                    WlOutputEvent::WlOutputgeometryEvent(WlOutputgeometryEvent {
                         sender_id,
                         x,
                         y,
@@ -4819,6 +5065,7 @@ impl WlObject {
                 }
                 1u16 => {
                     info!("Receive event {}", "WlOutputModeEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Uint>();
                     let start = parsed_len - size_of::<Uint>();
@@ -4836,7 +5083,7 @@ impl WlObject {
                     let start = parsed_len - size_of::<Int>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Int;
                     let refresh = unsafe { *raw_ptr };
-                    WlOutputEvent::WlOutputModeEvent(WlOutputModeEvent {
+                    WlOutputEvent::WlOutputmodeEvent(WlOutputmodeEvent {
                         sender_id,
                         flags,
                         width,
@@ -4846,17 +5093,19 @@ impl WlObject {
                 }
                 2u16 => {
                     info!("Receive event {}", "WlOutputDoneEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
-                    WlOutputEvent::WlOutputDoneEvent(WlOutputDoneEvent { sender_id })
+                    WlOutputEvent::WlOutputdoneEvent(WlOutputdoneEvent { sender_id })
                 }
                 3u16 => {
                     info!("Receive event {}", "WlOutputScaleEvent");
+                    #[allow(unused)]
                     let mut parsed_len: usize = 0;
                     parsed_len += size_of::<Int>();
                     let start = parsed_len - size_of::<Int>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Int;
                     let factor = unsafe { *raw_ptr };
-                    WlOutputEvent::WlOutputScaleEvent(WlOutputScaleEvent { sender_id, factor })
+                    WlOutputEvent::WlOutputscaleEvent(WlOutputscaleEvent { sender_id, factor })
                 }
                 _ => {
                     warn!("No such op_code");
