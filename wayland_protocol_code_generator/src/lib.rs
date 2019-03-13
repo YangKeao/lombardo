@@ -15,6 +15,45 @@ use syn::export::TokenStream2;
 
 const PROTOCOL: Protocol = wayland_protocol_scanner::parse_wayland_protocol();
 
+fn escape_name(name: &String) -> &String {
+    if name == "move" {
+        &String::from("mv")
+    } else {
+        name
+    }
+}
+
+fn construct_indent_from_string(str: &String) -> Ident {
+    Ident::new(str, Span::call_site())
+}
+
+enum Case {
+    CamelCase,
+    SnakeCase,
+}
+
+fn construct_ident_from_str_and_case(str: &String, case: Option<Case>) -> Ident {
+    match case {
+        Some(case) => {
+            match case {
+                Case::CamelCase => {
+                    construct_indent_from_string(&str.to_camel_case())
+                }
+                Case::SnakeCase => {
+                    construct_indent_from_string(&str.to_snake_case())
+                }
+            }
+        }
+        None => {
+            construct_indent_from_string(&str)
+        }
+    }
+}
+
+macro_rules! ident {
+    ($t:expr, $( $s:expr ),*, $c: expr) => (construct_ident_from_str_and_case(&format!($t, $(escape_name($s))*), $c))
+}
+
 fn generate_traits(mut code: TokenStream) -> TokenStream {
     for item in &PROTOCOL.items {
         match item {
@@ -23,27 +62,20 @@ fn generate_traits(mut code: TokenStream) -> TokenStream {
                     InterfaceChild::Request(req) => {
                         let args = req.items.iter().filter_map(|child| match child {
                             EventOrRequestField::Arg(arg) => {
-                                let arg_name = Ident::new(&arg.name, Span::call_site());
-                                let arg_typ =
-                                    Ident::new(&arg.typ.to_camel_case(), Span::call_site());
+                                let arg_name = ident!("{}", arg.name, None);
+                                let arg_typ = ident!("{}", arg.typ, Some(Case:CamelCase));
                                 Some(quote! {#arg_name: #arg_typ})
                             }
                             _ => None,
                         });
-                        let function_name = Ident::new(
-                            if req.name == "move" { "mv" } else { &req.name },
-                            Span::call_site(),
-                        );
+                        let function_name = ident!("{}", req.name, None);
                         return Some(quote! {fn #function_name(&self, #(#args),*);});
                     }
                     _ => {
                         None
                     }
                 });
-                let interface_name = Ident::new(
-                    &format!("I{}", interface.name.to_camel_case()),
-                    Span::call_site(),
-                );
+                let interface_name = ident!("I{}",interface.name.to_camel_case(), None);
                 code = quote! {
                     #code
                     pub trait #interface_name {
@@ -61,11 +93,8 @@ fn generate_req_interface_structs_and_functions(mut code: TokenStream) -> TokenS
     for item in &PROTOCOL.items {
         match item {
             ProtocolChild::Interface(interface) => {
-                let struct_name = Ident::new(&interface.name.to_camel_case(), Span::call_site());
-                let interface_name = Ident::new(
-                    &format!("I{}", interface.name.to_camel_case()),
-                    Span::call_site(),
-                );
+                let struct_name =ident!("{}", interface.name, Some(Case::CamelCase));
+                let interface_name = ident!("I{}", interface.name, Some(Case::CamelCase));
                 let mut req_op_code_count: u16 = 0;
                 let functions = interface.items.iter().filter_map(|msg| {
                     match msg {
@@ -73,22 +102,22 @@ fn generate_req_interface_structs_and_functions(mut code: TokenStream) -> TokenS
                             let args = req.items.iter().filter_map(|child| {
                                 match child {
                                     EventOrRequestField::Arg(arg) => {
-                                        let arg_name = Ident::new(&arg.name, Span::call_site());
-                                        let arg_typ = Ident::new(&arg.typ.to_camel_case(), Span::call_site());
+                                        let arg_name = ident!("{}", arg.name);
+                                        let arg_typ = ident!("{}", arg.typ, Some(Case::CamelCase));
                                         Some(quote! {#arg_name: #arg_typ})
                                     }
                                     _ => { None }
                                 }
                             });
-                            let function_name = Ident::new(if req.name == "move" { "mv" } else { &req.name }, Span::call_site());
+                            let function_name = ident!("{}", &req.name, None);
 
                             req_op_code_count += 1;
                             let op_code = req_op_code_count - 1;
                             let add_raw_size = req.items.iter().filter_map(|child| {
                                 match child {
                                     EventOrRequestField::Arg(arg) => {
-                                        let arg_name = Ident::new(&arg.name, Span::call_site());
-                                        let arg_typ = Ident::new(&arg.typ.to_camel_case(), Span::call_site());
+                                        let arg_name = ident!("{}",arg.name, None);
+                                        let arg_typ = ident!("{}", &arg.typ, Some(Case::CamelCase));
                                         match &arg.typ.to_camel_case()[..] {
                                             "String" => {
                                                 Some(quote! {
@@ -111,8 +140,8 @@ fn generate_req_interface_structs_and_functions(mut code: TokenStream) -> TokenS
                             let send_args = req.items.iter().filter_map(|child| {
                                 match child {
                                     EventOrRequestField::Arg(arg) => {
-                                        let arg_name = Ident::new(&arg.name, Span::call_site());
-                                        let arg_typ = Ident::new(&arg.typ.to_camel_case(), Span::call_site());
+                                        let arg_name = ident!("{}",arg.name, None);
+                                        let arg_typ = ident!("{}", &arg.typ, Some(Case::CamelCase));
                                         match &arg.typ.to_camel_case()[..] {
                                             "String" => {
                                                 Some(quote! {
@@ -196,20 +225,14 @@ fn generate_req_interface_structs_and_functions(mut code: TokenStream) -> TokenS
 fn generate_get_wayland_object_functions(mut code: TokenStream) -> TokenStream {
     let interface_names = PROTOCOL.items.iter().filter_map(|item| match item {
         ProtocolChild::Interface(interface) => {
-            let interface_name = Ident::new(
-                &format!("{}", interface.name.to_camel_case()),
-                Span::call_site(),
-            );
+            let interface_name = ident!("{}", interface.name, Some(Case::CamelCase));
             Some(quote! {#interface_name(#interface_name)})
         }
         _ => None,
     });
     let impl_wl_raw_obj = PROTOCOL.items.iter().filter_map(|item| match item {
         ProtocolChild::Interface(interface) => {
-            let interface_name = Ident::new(
-                &format!("{}", interface.name.to_camel_case()),
-                Span::call_site(),
-            );
+            let interface_name = ident!("{}", interface.name, Some(Case::CamelCase));
             Some(quote! {
                 impl WlRawObject for #interface_name {
                     fn new(object_id: u32, socket: Arc<WaylandSocket>) -> #interface_name {
@@ -228,14 +251,8 @@ fn generate_get_wayland_object_functions(mut code: TokenStream) -> TokenStream {
     });
     let impl_wl_get_obj = PROTOCOL.items.iter().filter_map(|item| match item {
         ProtocolChild::Interface(interface) => {
-            let interface_name = Ident::new(
-                &format!("{}", interface.name.to_camel_case()),
-                Span::call_site(),
-            );
-            let get_function_name = Ident::new(
-                &format!("try_get_{}", interface.name.to_snake_case()),
-                Span::call_site(),
-            );
+            let interface_name = ident!("{}", interface.name, Some(Case::CamelCase));
+            let get_function_name = ident!("try_get_{}", interface.name, Some(Case::SnakeCase));
             Some(quote! {
                 #[allow(dead_code)]
                 pub fn #get_function_name(&self) -> Option<#interface_name> {
@@ -273,19 +290,11 @@ fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> Toke
                 for child in interface.items.iter() {
                     match child {
                         InterfaceChild::Event(ev) => {
-                            let interface_event_name = Ident::new(
-                                &format!(
-                                    "{}{}Event",
-                                    interface.name.to_camel_case(),
-                                    ev.name.to_camel_case()
-                                ),
-                                Span::call_site(),
-                            );
+                            let interface_event_name = ident!("{}{}Event", interface.name, ev.name, Case::CamelCase);
                             let event_fields = ev.items.iter().filter_map(|field| match field {
                                 EventOrRequestField::Arg(arg) => {
-                                    let arg_name = Ident::new(&arg.name, Span::call_site());
-                                    let arg_typ =
-                                        Ident::new(&arg.typ.to_camel_case(), Span::call_site());
+                                    let arg_name = ident!("{}",arg.name, None);
+                                    let arg_typ = ident!("{}",arg.typ, Some(Case::CamelCase));;
                                     Some(quote! {#arg_name: #arg_typ})
                                 }
                                 _ => None,
@@ -308,20 +317,10 @@ fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> Toke
     }
     let interface_event_enums = PROTOCOL.items.iter().filter_map(|item| match item {
         ProtocolChild::Interface(interface) => {
-            let interface_event_name = Ident::new(
-                &format!("{}Event", interface.name.to_camel_case()),
-                Span::call_site(),
-            );
+            let interface_event_name = ident!("{}Event", interface.name, Some(Case::CamelCase));
             let mut interface_event_events: Vec<TokenStream> = interface.items.iter().filter_map(|child| match child {
                 InterfaceChild::Event(ev) => {
-                    let interface_event_name = Ident::new(
-                        &format!(
-                            "{}{}Event",
-                            interface.name.to_camel_case(),
-                            ev.name.to_camel_case()
-                        ),
-                        Span::call_site(),
-                    );
+                    let interface_event_name = ident!("{}{}Event",interface.name,ev.name,Some(Case::CamelCase));
                     Some(quote! {#interface_event_name(#interface_event_name)})
                 }
                 _ => None,
@@ -337,10 +336,7 @@ fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> Toke
     });
     let interface_event_names = PROTOCOL.items.iter().filter_map(|item| match item {
         ProtocolChild::Interface(interface) => {
-            let interface_event_name = Ident::new(
-                &format!("{}Event", interface.name.to_camel_case()),
-                Span::call_site(),
-            );
+            let interface_event_name = ident!("{}Event", interface.name, Some(Case::CamelCase));
             Some(quote! {
                 #interface_event_name(#interface_event_name)
             })
@@ -427,14 +423,9 @@ fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> Toke
         ProtocolChild::Interface(interface) => {
             let interface_name_str = format!("{}", interface.name.to_camel_case());
             let event_interface_name_str = format!("{}Event", interface.name.to_camel_case());
-            let interface_name = Ident::new(
-                &interface_name_str,
-                Span::call_site(),
-            );
-            let event_interface_name = Ident::new(
-                &event_interface_name_str,
-                Span::call_site(),
-            );
+            let interface_name = ident!("{}", interface.name, Some(Case::CamelCase));
+            let event_interface_name = ident!("{}Event", interface.name, Some(Case::CamelCase));
+
             let mut op_code: u16 = 0;
             let parse_event_for_every_op_code = interface.items.iter().filter_map(|child| match child {
                 InterfaceChild::Event(ev) => {
@@ -442,20 +433,13 @@ fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> Toke
                     let true_op_code =op_code - 1;
 
                     let ev_name_str = format!("{}{}Event", interface.name.to_camel_case(), ev.name.to_camel_case());
-                    let ev_name = Ident::new(
-                        &ev_name_str,
-                        Span::call_site(),
-                    );
+                    let ev_name = ident!("{}{}Event", interface.name, ev.name, Some(Case::CamelCase));
                     let parse_args = ev.items.iter().filter_map(|field| {
                         match field {
                             EventOrRequestField::Arg(arg) => {
                                 let arg_name_str = arg.name.to_snake_case();
-                                let arg_name = Ident::new(
-                                    &arg_name_str,
-                                    Span::call_site(),
-                                );
-                                let arg_typ =
-                                    Ident::new(&arg.typ.to_camel_case(), Span::call_site());
+                                let arg_name = ident!("{}", arg.name, Some(Case::SnakeCase));
+                                let arg_typ = ident!("{}", arg.typ, Some(Case::CamelCase));
                                 match &arg.typ[..] {
                                     "fixed" => {
                                         Some(quote! {
@@ -510,10 +494,7 @@ fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> Toke
                         match field {
                             EventOrRequestField::Arg(arg) => {
                                 let arg_name_str = arg.name.to_snake_case();
-                                let arg_name = Ident::new(
-                                    &arg_name_str,
-                                    Span::call_site(),
-                                );
+                                let arg_name = ident!("{}", arg.name, Some(Case::SnakeCase));
                                 Some(quote! {#arg_name})
                             }
                             _ => None
