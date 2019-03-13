@@ -19,7 +19,7 @@ fn generate_traits(mut code: TokenStream) -> TokenStream {
     for item in &PROTOCOL.items {
         match item {
             ProtocolChild::Interface(interface) => {
-                let functions = interface.items.iter().map(|msg| match msg {
+                let functions = interface.items.iter().filter_map(|msg| match msg {
                     InterfaceChild::Request(req) => {
                         let args = req.items.iter().filter_map(|child| match child {
                             EventOrRequestField::Arg(arg) => {
@@ -34,16 +34,10 @@ fn generate_traits(mut code: TokenStream) -> TokenStream {
                             if req.name == "move" { "mv" } else { &req.name },
                             Span::call_site(),
                         );
-                        return quote! {fn #function_name(&self, #(#args),*);};
-                    }
-                    InterfaceChild::Event(_ev) => {
-                        quote! {}
-                    }
-                    InterfaceChild::Enum(_en) => {
-                        quote! {}
+                        return Some(quote! {fn #function_name(&self, #(#args),*);});
                     }
                     _ => {
-                        quote! {}
+                        None
                     }
                 });
                 let interface_name = Ident::new(
