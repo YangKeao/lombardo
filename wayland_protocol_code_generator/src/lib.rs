@@ -5,6 +5,8 @@ extern crate proc_macro;
 extern crate wayland_protocol_scanner;
 #[macro_use]
 extern crate quote;
+#[macro_use]
+extern crate lazy_static;
 
 use heck::{CamelCase, SnakeCase};
 use proc_macro2::{Ident, Span, TokenStream};
@@ -13,13 +15,15 @@ use wayland_protocol_scanner::InterfaceChild;
 use wayland_protocol_scanner::ProtocolChild;
 use wayland_protocol_scanner::{EventOrRequestField, Protocol};
 
-const PROTOCOL: Protocol = wayland_protocol_scanner::parse_wayland_protocol();
+lazy_static! {
+    static ref PROTOCOL: Protocol = wayland_protocol_scanner::parse_wayland_protocol();
+}
 
-fn escape_name(name: &String) -> &String {
+fn escape_name(name: &String) -> String {
     if name == "move" {
-        &String::from("mv")
+        String::from("mv")
     } else {
-        name
+        name.clone()
     }
 }
 
@@ -550,8 +554,6 @@ fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> Toke
 }
 
 pub fn generate_wayland_protocol_code() -> String {
-    let PROTOCOL = wayland_protocol_scanner::parse_wayland_protocol();
-
     // Required USE
     let mut code = quote! {
         use super::socket::*;
