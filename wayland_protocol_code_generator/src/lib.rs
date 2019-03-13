@@ -79,6 +79,59 @@ fn generate_traits(mut code: TokenStream) -> TokenStream {
     return code;
 }
 
+fn add_arg_size(arg: &wayland_protocol_scanner::Arg) -> TokenStream {
+    let arg_name = ident!("{}",arg.name, None);
+    let arg_typ = ident!("{}", &arg.typ, Some(Case::CamelCase));
+    match &arg.typ[..] {
+        "String" => {
+            Some(quote! {
+                raw_size += ((#arg_name.len() + 1) as f64 / 4.0).ceil() as usize * 4 + 4;
+            })
+        }
+        "Fd" => {
+            None
+        }
+        // TODO: Array and other types
+        _ => {
+            Some(quote! {raw_size += size_of::<#arg_typ>();})
+        }
+    }
+}
+
+fn send_arg(arg: &wayland_protocol_scanner::Arg) -> TokenStream {
+    let arg_name = ident!("{}",arg.name, None);
+    let arg_typ = ident!("{}", &arg.typ, Some(Case::CamelCase));
+    match &arg.typ.to_camel_case()[..] {
+        "String" => {
+            Some(quote! {
+                let str_len = #arg_name.len();
+                let buf_len = ((#arg_name.len() + 1) as f64 / 4.0).ceil() as usize * 4;
+                unsafe {
+                    std::ptr::copy(&buf_len as *const usize as *const u8, &mut send_buffer[written_len] as *mut u8, str_len + 1);
+                    std::ptr::copy(&#arg_name.into_bytes()[0] as *const u8, &mut send_buffer[written_len + 4] as *mut u8, str_len);
+                }
+                written_len += buf_len + 4;
+            })
+        }
+        "Fd" => {
+            Some(quote! {
+                info!("Send FD: {}", #arg_name);
+                send_fd[send_fd_num] = #arg_name;
+                send_fd_num += 1;
+            })
+        }
+        // TODO: Array and other types
+        _ => {
+            Some(quote! {
+                unsafe {
+                    std::ptr::copy(&#arg_name as *const #arg_typ, &mut send_buffer[written_len] as *mut u8 as *mut #arg_typ, 1);
+                }
+                written_len += size_of::<u32>();
+            })
+        }
+    }
+}
+
 fn generate_req_interface_structs_and_functions(mut code: TokenStream) -> TokenStream {
     for item in &PROTOCOL.items {
         match item {
@@ -106,22 +159,7 @@ fn generate_req_interface_structs_and_functions(mut code: TokenStream) -> TokenS
                             let add_raw_size = req.items.iter().filter_map(|child| {
                                 match child {
                                     EventOrRequestField::Arg(arg) => {
-                                        let arg_name = ident!("{}",arg.name, None);
-                                        let arg_typ = ident!("{}", &arg.typ, Some(Case::CamelCase));
-                                        match &arg.typ.to_camel_case()[..] {
-                                            "String" => {
-                                                Some(quote! {
-                                                    raw_size += ((#arg_name.len() + 1) as f64 / 4.0).ceil() as usize * 4 + 4;
-                                                })
-                                            }
-                                            "Fd" => {
-                                                None
-                                            }
-                                            // TODO: Array and other types
-                                            _ => {
-                                                Some(quote! {raw_size += size_of::<#arg_typ>();})
-                                            }
-                                        }
+                                        add_arg_size(arg)
                                     }
                                     _ => { None }
                                 }
@@ -130,37 +168,7 @@ fn generate_req_interface_structs_and_functions(mut code: TokenStream) -> TokenS
                             let send_args = req.items.iter().filter_map(|child| {
                                 match child {
                                     EventOrRequestField::Arg(arg) => {
-                                        let arg_name = ident!("{}",arg.name, None);
-                                        let arg_typ = ident!("{}", &arg.typ, Some(Case::CamelCase));
-                                        match &arg.typ.to_camel_case()[..] {
-                                            "String" => {
-                                                Some(quote! {
-                                                    let str_len = #arg_name.len();
-                                                    let buf_len = ((#arg_name.len() + 1) as f64 / 4.0).ceil() as usize * 4;
-                                                    unsafe {
-                                                        std::ptr::copy(&buf_len as *const usize as *const u8, &mut send_buffer[written_len] as *mut u8, str_len + 1);
-                                                        std::ptr::copy(&#arg_name.into_bytes()[0] as *const u8, &mut send_buffer[written_len + 4] as *mut u8, str_len);
-                                                    }
-                                                    written_len += buf_len + 4;
-                                                })
-                                            }
-                                            "Fd" => {
-                                                Some(quote! {
-                                                    info!("Send FD: {}", #arg_name);
-                                                    send_fd[send_fd_num] = #arg_name;
-                                                    send_fd_num += 1;
-                                                })
-                                            }
-                                            // TODO: Array and other types
-                                            _ => {
-                                                Some(quote! {
-                                                    unsafe {
-                                                        std::ptr::copy(&#arg_name as *const #arg_typ, &mut send_buffer[written_len] as *mut u8 as *mut #arg_typ, 1);
-                                                    }
-                                                    written_len += size_of::<u32>();
-                                                })
-                                            }
-                                        }
+                                        send_arg(arg);
                                     }
                                     _ => { None }
                                 }
