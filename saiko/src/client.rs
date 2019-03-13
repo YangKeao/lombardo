@@ -55,7 +55,6 @@ impl Client {
 
     pub fn sync(&self) {
         let callback_id = self.new_obj::<WlCallback>();
-        let this = self.clone();
 
         let done_pair = Arc::new((Mutex::new(false), Condvar::new()));
         let c_done_pair = done_pair.clone();

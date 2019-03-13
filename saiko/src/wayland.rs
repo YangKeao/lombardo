@@ -1,6 +1,5 @@
 use super::socket::*;
 use crate::unix_socket::UnixSocket;
-use std::io::Read;
 use std::mem::size_of;
 use std::mem::transmute;
 use std::sync::Arc;
@@ -164,6 +163,7 @@ impl IwlDisplay for WlDisplay {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -200,6 +200,7 @@ impl IwlDisplay for WlDisplay {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -248,6 +249,7 @@ impl IwlRegistry for WlRegistry {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         let str_len = interface_name.len();
         let buf_len = ((interface_name.len() + 1) as f64 / 4.0).ceil() as usize * 4;
@@ -263,6 +265,7 @@ impl IwlRegistry for WlRegistry {
                 str_len,
             );
         }
+        #[allow(unused)]
         written_len += buf_len + 4;
         unsafe {
             std::ptr::copy(
@@ -271,6 +274,7 @@ impl IwlRegistry for WlRegistry {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -279,6 +283,7 @@ impl IwlRegistry for WlRegistry {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -332,6 +337,7 @@ impl IwlCompositor for WlCompositor {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -368,6 +374,7 @@ impl IwlCompositor for WlCompositor {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -426,6 +433,7 @@ impl IwlShmPool for WlShmPool {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -434,6 +442,7 @@ impl IwlShmPool for WlShmPool {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -442,6 +451,7 @@ impl IwlShmPool for WlShmPool {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -450,6 +460,7 @@ impl IwlShmPool for WlShmPool {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -458,6 +469,7 @@ impl IwlShmPool for WlShmPool {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -466,6 +478,7 @@ impl IwlShmPool for WlShmPool {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -529,6 +542,7 @@ impl IwlShmPool for WlShmPool {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -576,6 +590,7 @@ impl IwlShm for WlShm {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         info!("Send FD: {}", fd);
         send_fd[send_fd_num] = fd;
@@ -587,6 +602,7 @@ impl IwlShm for WlShm {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -669,6 +685,7 @@ impl IwlDataOffer for WlDataOffer {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         let str_len = mime_type.len();
         let buf_len = ((mime_type.len() + 1) as f64 / 4.0).ceil() as usize * 4;
@@ -684,6 +701,7 @@ impl IwlDataOffer for WlDataOffer {
                 str_len,
             );
         }
+        #[allow(unused)]
         written_len += buf_len + 4;
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -728,6 +746,7 @@ impl IwlDataOffer for WlDataOffer {
                 str_len,
             );
         }
+        #[allow(unused)]
         written_len += buf_len + 4;
         info!("Send FD: {}", fd);
         send_fd[send_fd_num] = fd;
@@ -822,6 +841,7 @@ impl IwlDataOffer for WlDataOffer {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -830,6 +850,7 @@ impl IwlDataOffer for WlDataOffer {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -882,6 +903,7 @@ impl IwlDataSource for WlDataSource {
                 str_len,
             );
         }
+        #[allow(unused)]
         written_len += buf_len + 4;
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -945,6 +967,7 @@ impl IwlDataSource for WlDataSource {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -993,6 +1016,7 @@ impl IwlDataDevice for WlDataDevice {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -1001,6 +1025,7 @@ impl IwlDataDevice for WlDataDevice {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -1009,6 +1034,7 @@ impl IwlDataDevice for WlDataDevice {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -1017,6 +1043,7 @@ impl IwlDataDevice for WlDataDevice {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -1054,6 +1081,7 @@ impl IwlDataDevice for WlDataDevice {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -1062,6 +1090,7 @@ impl IwlDataDevice for WlDataDevice {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -1134,6 +1163,7 @@ impl IwlDataDeviceManager for WlDataDeviceManager {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -1171,6 +1201,7 @@ impl IwlDataDeviceManager for WlDataDeviceManager {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -1179,6 +1210,7 @@ impl IwlDataDeviceManager for WlDataDeviceManager {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -1225,6 +1257,7 @@ impl IwlShell for WlShell {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -1233,6 +1266,7 @@ impl IwlShell for WlShell {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -1278,6 +1312,7 @@ impl IwlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -1315,6 +1350,7 @@ impl IwlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -1323,6 +1359,7 @@ impl IwlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -1361,6 +1398,7 @@ impl IwlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -1369,6 +1407,7 @@ impl IwlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -1377,6 +1416,7 @@ impl IwlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -1443,6 +1483,7 @@ impl IwlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -1451,6 +1492,7 @@ impl IwlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -1459,6 +1501,7 @@ impl IwlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -1467,6 +1510,7 @@ impl IwlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -1505,6 +1549,7 @@ impl IwlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -1513,6 +1558,7 @@ impl IwlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -1521,6 +1567,7 @@ impl IwlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -1562,6 +1609,7 @@ impl IwlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -1570,6 +1618,7 @@ impl IwlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -1578,6 +1627,7 @@ impl IwlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -1586,6 +1636,7 @@ impl IwlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -1594,6 +1645,7 @@ impl IwlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -1602,6 +1654,7 @@ impl IwlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -1638,6 +1691,7 @@ impl IwlShellSurface for WlShellSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -1681,6 +1735,7 @@ impl IwlShellSurface for WlShellSurface {
                 str_len,
             );
         }
+        #[allow(unused)]
         written_len += buf_len + 4;
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -1724,6 +1779,7 @@ impl IwlShellSurface for WlShellSurface {
                 str_len,
             );
         }
+        #[allow(unused)]
         written_len += buf_len + 4;
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -1798,6 +1854,7 @@ impl IwlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -1806,6 +1863,7 @@ impl IwlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -1814,6 +1872,7 @@ impl IwlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -1853,6 +1912,7 @@ impl IwlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -1861,6 +1921,7 @@ impl IwlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -1869,6 +1930,7 @@ impl IwlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -1877,6 +1939,7 @@ impl IwlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -1913,6 +1976,7 @@ impl IwlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -1949,6 +2013,7 @@ impl IwlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -1985,6 +2050,7 @@ impl IwlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -2048,6 +2114,7 @@ impl IwlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -2084,6 +2151,7 @@ impl IwlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -2123,6 +2191,7 @@ impl IwlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -2131,6 +2200,7 @@ impl IwlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -2139,6 +2209,7 @@ impl IwlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -2147,6 +2218,7 @@ impl IwlSurface for WlSurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -2192,6 +2264,7 @@ impl IwlSeat for WlSeat {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -2228,6 +2301,7 @@ impl IwlSeat for WlSeat {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -2264,6 +2338,7 @@ impl IwlSeat for WlSeat {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -2339,6 +2414,7 @@ impl IwlPointer for WlPointer {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -2347,6 +2423,7 @@ impl IwlPointer for WlPointer {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -2355,6 +2432,7 @@ impl IwlPointer for WlPointer {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -2363,6 +2441,7 @@ impl IwlPointer for WlPointer {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -2573,6 +2652,7 @@ impl IwlRegion for WlRegion {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -2581,6 +2661,7 @@ impl IwlRegion for WlRegion {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -2589,6 +2670,7 @@ impl IwlRegion for WlRegion {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -2597,6 +2679,7 @@ impl IwlRegion for WlRegion {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -2636,6 +2719,7 @@ impl IwlRegion for WlRegion {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -2644,6 +2728,7 @@ impl IwlRegion for WlRegion {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -2652,6 +2737,7 @@ impl IwlRegion for WlRegion {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -2660,6 +2746,7 @@ impl IwlRegion for WlRegion {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -2734,6 +2821,7 @@ impl IwlSubcompositor for WlSubcompositor {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -2742,6 +2830,7 @@ impl IwlSubcompositor for WlSubcompositor {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -2750,6 +2839,7 @@ impl IwlSubcompositor for WlSubcompositor {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -2823,6 +2913,7 @@ impl IwlSubsurface for WlSubsurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             std::ptr::copy(
@@ -2831,6 +2922,7 @@ impl IwlSubsurface for WlSubsurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -2867,6 +2959,7 @@ impl IwlSubsurface for WlSubsurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -2903,6 +2996,7 @@ impl IwlSubsurface for WlSubsurface {
                 1,
             );
         }
+        #[allow(unused)]
         written_len += size_of::<u32>();
         unsafe {
             send_fd.set_len(send_fd_num);
@@ -3958,7 +4052,7 @@ impl ReadEvent for UnixSocket {
     fn read_event(&mut self) -> Vec<(EventHeader, Vec<u8>)> {
         let mut buffer: [u8; 1024] = [0; 1024];
         let mut fds: [u8; 24] = [0; 24];
-        let (size, num_fds) = self.read(&mut buffer, &mut fds);
+        let (size, _) = self.read(&mut buffer, &mut fds);
         if size == 1024 {
             warn!("Buffer is full");
         }
@@ -4342,9 +4436,9 @@ impl WlObject {
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Object;
                     let surface = unsafe { *raw_ptr };
                     let x: f32 = 0.0;
-                    unimplemented!();
+                    warn!("Fixed value has not been implemented");
                     let y: f32 = 0.0;
-                    unimplemented!();
+                    warn!("Fixed value has not been implemented");
                     parsed_len += size_of::<Object>();
                     let start = parsed_len - size_of::<Object>();
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Object;
@@ -4373,9 +4467,9 @@ impl WlObject {
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Uint;
                     let time = unsafe { *raw_ptr };
                     let x: f32 = 0.0;
-                    unimplemented!();
+                    warn!("Fixed value has not been implemented");
                     let y: f32 = 0.0;
-                    unimplemented!();
+                    warn!("Fixed value has not been implemented");
                     WlDataDeviceEvent::WlDataDevicemotionEvent(WlDataDevicemotionEvent {
                         sender_id,
                         time,
@@ -4552,9 +4646,9 @@ impl WlObject {
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Object;
                     let surface = unsafe { *raw_ptr };
                     let surface_x: f32 = 0.0;
-                    unimplemented!();
+                    warn!("Fixed value has not been implemented");
                     let surface_y: f32 = 0.0;
-                    unimplemented!();
+                    warn!("Fixed value has not been implemented");
                     WlPointerEvent::WlPointerenterEvent(WlPointerenterEvent {
                         sender_id,
                         serial,
@@ -4590,9 +4684,9 @@ impl WlObject {
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Uint;
                     let time = unsafe { *raw_ptr };
                     let surface_x: f32 = 0.0;
-                    unimplemented!();
+                    warn!("Fixed value has not been implemented");
                     let surface_y: f32 = 0.0;
-                    unimplemented!();
+                    warn!("Fixed value has not been implemented");
                     WlPointerEvent::WlPointermotionEvent(WlPointermotionEvent {
                         sender_id,
                         time,
@@ -4641,7 +4735,7 @@ impl WlObject {
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Uint;
                     let axis = unsafe { *raw_ptr };
                     let value: f32 = 0.0;
-                    unimplemented!();
+                    warn!("Fixed value has not been implemented");
                     WlPointerEvent::WlPointeraxisEvent(WlPointeraxisEvent {
                         sender_id,
                         time,
@@ -4746,7 +4840,7 @@ impl WlObject {
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Object;
                     let surface = unsafe { *raw_ptr };
                     let keys: Vec<u32> = Vec::new();
-                    unimplemented!();
+                    warn!("Array value has not been implemented");
                     WlKeyboardEvent::WlKeyboardenterEvent(WlKeyboardenterEvent {
                         sender_id,
                         serial,
@@ -4878,9 +4972,9 @@ impl WlObject {
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Int;
                     let id = unsafe { *raw_ptr };
                     let x: f32 = 0.0;
-                    unimplemented!();
+                    warn!("Fixed value has not been implemented");
                     let y: f32 = 0.0;
-                    unimplemented!();
+                    warn!("Fixed value has not been implemented");
                     WlTouchEvent::WlTouchdownEvent(WlTouchdownEvent {
                         sender_id,
                         serial,
@@ -4927,9 +5021,9 @@ impl WlObject {
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Int;
                     let id = unsafe { *raw_ptr };
                     let x: f32 = 0.0;
-                    unimplemented!();
+                    warn!("Fixed value has not been implemented");
                     let y: f32 = 0.0;
-                    unimplemented!();
+                    warn!("Fixed value has not been implemented");
                     WlTouchEvent::WlTouchmotionEvent(WlTouchmotionEvent {
                         sender_id,
                         time,
@@ -4959,9 +5053,9 @@ impl WlObject {
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Int;
                     let id = unsafe { *raw_ptr };
                     let major: f32 = 0.0;
-                    unimplemented!();
+                    warn!("Fixed value has not been implemented");
                     let minor: f32 = 0.0;
-                    unimplemented!();
+                    warn!("Fixed value has not been implemented");
                     WlTouchEvent::WlTouchshapeEvent(WlTouchshapeEvent {
                         sender_id,
                         id,
@@ -4978,7 +5072,7 @@ impl WlObject {
                     let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const Int;
                     let id = unsafe { *raw_ptr };
                     let orientation: f32 = 0.0;
-                    unimplemented!();
+                    warn!("Fixed value has not been implemented");
                     WlTouchEvent::WlTouchorientationEvent(WlTouchorientationEvent {
                         sender_id,
                         id,

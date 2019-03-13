@@ -10,7 +10,6 @@ extern crate lazy_static;
 
 use heck::{CamelCase, SnakeCase};
 use proc_macro2::{Ident, Span, TokenStream};
-use syn::export::TokenStream2;
 use wayland_protocol_scanner::InterfaceChild;
 use wayland_protocol_scanner::ProtocolChild;
 use wayland_protocol_scanner::{EventOrRequestField, Protocol};
@@ -120,6 +119,7 @@ fn send_arg(arg: &wayland_protocol_scanner::Arg) -> Option<TokenStream> {
                     std::ptr::copy(&buf_len as *const usize as *const u8, &mut send_buffer[written_len] as *mut u8, str_len + 1);
                     std::ptr::copy(&#arg_name.into_bytes()[0] as *const u8, &mut send_buffer[written_len + 4] as *mut u8, str_len);
                 }
+                #[allow(unused)]
                 written_len += buf_len + 4;
             })
         }
@@ -136,6 +136,7 @@ fn send_arg(arg: &wayland_protocol_scanner::Arg) -> Option<TokenStream> {
                 unsafe {
                     std::ptr::copy(&#arg_name as *const #arg_typ, &mut send_buffer[written_len] as *mut u8 as *mut #arg_typ, 1);
                 }
+                #[allow(unused)]
                 written_len += size_of::<u32>();
             })
         }
@@ -390,7 +391,7 @@ fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> Toke
                 let mut buffer: [u8; 1024] = [0; 1024];
                 let mut fds: [u8; 24] = [0; 24];
 
-                let (size, num_fds) = self.read(&mut buffer, &mut fds);
+                let (size, _) = self.read(&mut buffer, &mut fds);
                 if size == 1024 {
                     warn!("Buffer is full");
                 }
@@ -424,8 +425,6 @@ fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> Toke
 
     let parse_event_for_every_interface = PROTOCOL.items.iter().filter_map(|item| match item {
         ProtocolChild::Interface(interface) => {
-            let interface_name_str = format!("{}", interface.name.to_camel_case());
-            let event_interface_name_str = format!("{}Event", interface.name.to_camel_case());
             let interface_name = ident!("{}", interface.name; Some(Case::CamelCase));
             let event_interface_name = ident!("{}Event", interface.name; Some(Case::CamelCase));
 
@@ -446,7 +445,7 @@ fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> Toke
                                     "fixed" => {
                                         Some(quote! {
                                             let #arg_name: f32 = 0.0;
-                                            unimplemented!();
+                                            warn!("Fixed value has not been implemented");
                                         })
                                     }
                                     "string" => {
@@ -473,7 +472,7 @@ fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> Toke
                                     "array" => {
                                         Some(quote! {
                                             let #arg_name: Vec<u32> = Vec::new();
-                                            unimplemented!();
+                                            warn!("Array value has not been implemented");
                                         })
                                     }
                                     _ => {
@@ -552,7 +551,6 @@ pub fn generate_wayland_protocol_code() -> String {
         use std::sync::Arc;
         use std::mem::transmute;
         use std::mem::size_of;
-        use std::io::Read;
 
         type NewId=u32;
         type Uint=u32;

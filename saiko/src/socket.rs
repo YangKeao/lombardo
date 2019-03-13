@@ -1,7 +1,6 @@
 use super::wayland::EventHeader;
 use super::wayland::ReadEvent;
 use crate::unix_socket::UnixSocket;
-use std::io::Write;
 use std::os::unix::io::RawFd;
 use std::sync::Arc;
 use std::sync::Mutex;

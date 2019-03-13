@@ -25,7 +25,8 @@ impl UnixSocket {
         socket::connect(
             fd,
             &socket::SockAddr::Unix(socket::UnixAddr::new(&path).unwrap()),
-        );
+        )
+        .unwrap();
 
         return UnixSocket { fd };
     }
@@ -37,7 +38,7 @@ impl UnixSocket {
     }
 
     pub fn read(&mut self, buffer: &mut [u8], fds: &mut [u8]) -> (usize, i32) {
-        let mut iov: [IoVec<&mut [u8]>; 1] = [IoVec::from_mut_slice(buffer); 1];
+        let iov: [IoVec<&mut [u8]>; 1] = [IoVec::from_mut_slice(buffer); 1];
         let mut cmsg: CmsgSpace<[RawFd; 1]> = CmsgSpace::new();
 
         let msg = recvmsg(self.fd, &iov, Some(&mut cmsg), MsgFlags::empty()).unwrap();
