@@ -565,6 +565,7 @@ fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> Toke
     };
     return code;
 }
+
 pub fn generate_wayland_protocol_code() -> String {
     let protocol = wayland_protocol_scanner::parse_wayland_protocol();
 
