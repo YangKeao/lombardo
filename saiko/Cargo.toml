@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Yang Keao <keao.yang@yahoo.com>"]
 edition = "2018"
 build = "build.rs"
-description = "An implementation of wayland protocol in rust"
+description = "An implementation of wayland PROTOCOL in rust"
 license = "MIT"
 
 [dependencies]

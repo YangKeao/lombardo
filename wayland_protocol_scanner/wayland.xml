@@ -31,7 +31,7 @@
   <interface name="wl_display" version="1">
     <description summary="core global object">
       The core global object.  This is a special singleton object.  It
-      is used for internal Wayland protocol features.
+      is used for internal Wayland PROTOCOL features.
     </description>
 
     <request name="sync">
@@ -532,7 +532,7 @@
 	The dnd_actions argument must contain only values expressed in the
 	wl_data_device_manager.dnd_actions enum, and the preferred_action
 	argument must only contain one of those values set, otherwise it
-	will result in a protocol error.
+	will result in a PROTOCOL error.
 
 	While managing an "ask" action, the destination drag-and-drop client
 	may perform further wl_data_offer.receive requests, and is expected
@@ -545,7 +545,7 @@
 	If the "ask" action is dismissed (e.g. user cancellation), the client
 	is expected to perform wl_data_offer.destroy right away.
 
-	This request can only be made on drag-and-drop offers, a protocol error
+	This request can only be made on drag-and-drop offers, a PROTOCOL error
 	will be raised otherwise.
       </description>
       <arg name="dnd_actions" type="uint" summary="actions supported by the destination client"/>
@@ -689,12 +689,12 @@
 
 	The dnd_actions argument must contain only values expressed in the
 	wl_data_device_manager.dnd_actions enum, otherwise it will result
-	in a protocol error.
+	in a PROTOCOL error.
 
 	This request must be made once only, and can only be made on sources
 	used in drag-and-drop, so it must be performed before
 	wl_data_device.start_drag. Attempting to use the source other than
-	for drag-and-drop will raise a protocol error.
+	for drag-and-drop will raise a PROTOCOL error.
       </description>
       <arg name="dnd_actions" type="uint" summary="actions supported by the data source"/>
     </request>
@@ -791,7 +791,7 @@
 	relative position. Attach requests must be confirmed with
 	wl_surface.commit as usual. The icon surface is given the role of
 	a drag-and-drop icon. If the icon surface already has another role,
-	it raises a protocol error.
+	it raises a PROTOCOL error.
 
 	The current and pending input regions of the icon wl_surface are
 	cleared, and wl_surface.set_input_region is ignored until the
@@ -981,7 +981,7 @@
       It allows clients to associate a wl_shell_surface with
       a basic surface.
 
-      Note! This protocol is deprecated and not intended for production use.
+      Note! This PROTOCOL is deprecated and not intended for production use.
       For desktop-style user interfaces, use xdg_shell.
     </description>
 
@@ -993,7 +993,7 @@
       <description summary="create a shell surface from a surface">
 	Create a shell surface for an existing surface. This gives
 	the wl_surface the role of a shell surface. If the wl_surface
-	already has another role, it raises a protocol error.
+	already has another role, it raises a PROTOCOL error.
 
 	Only one shell surface can be associated with a given surface.
       </description>
@@ -1292,7 +1292,7 @@
       pointer (as set by wl_pointer.set_cursor), a drag icon
       (wl_data_device.start_drag), a sub-surface
       (wl_subcompositor.get_subsurface), and a window as defined by a
-      shell protocol (e.g. wl_shell.get_shell_surface).
+      shell PROTOCOL (e.g. wl_shell.get_shell_surface).
 
       A surface can have only one role at a time. Initially a
       wl_surface does not have a role. Once a wl_surface is given a
@@ -1304,7 +1304,7 @@
       Surface roles are given by requests in other interfaces such as
       wl_pointer.set_cursor. The request should explicitly mention
       that this request gives a role to a wl_surface. Often, this
-      request also creates a new protocol object that represents the
+      request also creates a new PROTOCOL object that represents the
       role and adds additional functionality to wl_surface. When a
       client wants to destroy a wl_surface, they must destroy this 'role
       object' before the wl_surface.
@@ -1582,7 +1582,7 @@
 	of the buffer will become the surface width.
 
 	If transform is not one of the values from the
-	wl_output.transform enum the invalid_transform protocol error
+	wl_output.transform enum the invalid_transform PROTOCOL error
 	is raised.
       </description>
       <arg name="transform" type="int" enum="wl_output.transform"
@@ -1614,7 +1614,7 @@
 	a buffer that is larger (by a factor of scale in each dimension)
 	than the desired surface size.
 
-	If scale is not positive the invalid_scale protocol error is
+	If scale is not positive the invalid_scale PROTOCOL error is
 	raised.
       </description>
       <arg name="scale" type="int"
@@ -1650,7 +1650,7 @@
 	and buffer transform.
 
 	Note: Because buffer transformation changes and damage requests may
-	be interleaved in the protocol stream, it is impossible to determine
+	be interleaved in the PROTOCOL stream, it is impossible to determine
 	the actual mapping between surface and buffer damage until
 	wl_surface.commit time. Therefore, compositors wishing to take both
 	kinds of damage into account will have to accumulate damage from the
@@ -1719,7 +1719,7 @@
 
 	This request only takes effect if the seat has the pointer
 	capability, or has had the pointer capability in the past.
-	It is a protocol violation to issue this request on a seat that has
+	It is a PROTOCOL violation to issue this request on a seat that has
 	never had the pointer capability.
       </description>
       <arg name="id" type="new_id" interface="wl_pointer" summary="seat pointer"/>
@@ -1732,7 +1732,7 @@
 
 	This request only takes effect if the seat has the keyboard
 	capability, or has had the keyboard capability in the past.
-	It is a protocol violation to issue this request on a seat that has
+	It is a PROTOCOL violation to issue this request on a seat that has
 	never had the keyboard capability.
       </description>
       <arg name="id" type="new_id" interface="wl_keyboard" summary="seat keyboard"/>
@@ -1745,7 +1745,7 @@
 
 	This request only takes effect if the seat has the touch
 	capability, or has had the touch capability in the past.
-	It is a protocol violation to issue this request on a seat that has
+	It is a PROTOCOL violation to issue this request on a seat that has
 	never had the touch capability.
       </description>
       <arg name="id" type="new_id" interface="wl_touch" summary="seat touch interface"/>
@@ -1794,7 +1794,7 @@
 	Set the pointer surface, i.e., the surface that contains the
 	pointer image (cursor). This request gives the surface the role
 	of a cursor. If the surface already has another role, it raises
-	a protocol error.
+	a PROTOCOL error.
 
 	The cursor actually changes only if the pointer
 	focus for this device is one of the requesting client's surfaces
@@ -1892,7 +1892,7 @@
 	Any 16-bit button code value is reserved for future additions to the
 	kernel's event code list. All other button codes above 0xFFFF are
 	currently undefined but may be used in future versions of this
-	protocol.
+	PROTOCOL.
       </description>
       <arg name="serial" type="uint" summary="serial number of the button event"/>
       <arg name="time" type="uint" summary="timestamp with millisecond granularity"/>
@@ -2071,9 +2071,9 @@
 
 	This event does not occur on its own, it is coupled with a
 	wl_pointer.axis event that represents this axis value on a
-	continuous scale. The protocol guarantees that each axis_discrete
+	continuous scale. The PROTOCOL guarantees that each axis_discrete
 	event is always followed by exactly one axis event with the same
-	axis number within the same wl_pointer.frame. Note that the protocol
+	axis number within the same wl_pointer.frame. Note that the PROTOCOL
 	allows for other events to occur between the axis_discrete and
 	its coupled axis event, including other axis_discrete or axis
 	events.
@@ -2466,7 +2466,7 @@
 
 	Clients should not use the refresh rate to schedule frames. Instead,
 	they should use the wl_surface.frame event or the presentation-time
-	protocol.
+	PROTOCOL.
 
 	Note: this information is not always meaningful for all outputs. Some
 	compositors, such as those exposing virtual outputs, might fake the
@@ -2585,7 +2585,7 @@
     <request name="destroy" type="destructor">
       <description summary="unbind from the subcompositor interface">
 	Informs the server that the client will not be using this
-	protocol object anymore. This does not affect any other
+	PROTOCOL object anymore. This does not affect any other
 	objects, wl_subsurface objects included.
       </description>
     </request>
@@ -2602,7 +2602,7 @@
 	plain wl_surface into a sub-surface.
 
 	The to-be sub-surface must not already have another role, and it
-	must not have an existing wl_subsurface object. Otherwise a protocol
+	must not have an existing wl_subsurface object. Otherwise a PROTOCOL
 	error is raised.
 
 	Adding sub-surfaces to a parent is a double-buffered operation on the
@@ -2719,7 +2719,7 @@
 	above the reference surface, changing the z-order of the sub-surfaces.
 	The reference surface must be one of the sibling surfaces, or the
 	parent surface. Using any other surface, including this sub-surface,
-	will cause a protocol error.
+	will cause a PROTOCOL error.
 
 	The z-order is double-buffered. Requests are handled in order and
 	applied immediately to a pending state. The final pending state is

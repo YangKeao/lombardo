@@ -13,10 +13,10 @@ use wayland_protocol_scanner::InterfaceChild;
 use wayland_protocol_scanner::ProtocolChild;
 use syn::export::TokenStream2;
 
-const protocol: Protocol = wayland_protocol_scanner::parse_wayland_protocol();
+const PROTOCOL: Protocol = wayland_protocol_scanner::parse_wayland_protocol();
 
 fn generate_traits(mut code: TokenStream) -> TokenStream {
-    for item in &protocol.items {
+    for item in &PROTOCOL.items {
         match item {
             ProtocolChild::Interface(interface) => {
                 let functions = interface.items.iter().map(|msg| match msg {
@@ -64,7 +64,7 @@ fn generate_traits(mut code: TokenStream) -> TokenStream {
 }
 
 fn generate_req_interface_structs_and_functions(mut code: TokenStream) -> TokenStream {
-    for item in &protocol.items {
+    for item in &PROTOCOL.items {
         match item {
             ProtocolChild::Interface(interface) => {
                 let struct_name = Ident::new(&interface.name.to_camel_case(), Span::call_site());
@@ -200,7 +200,7 @@ fn generate_req_interface_structs_and_functions(mut code: TokenStream) -> TokenS
 }
 
 fn generate_get_wayland_object_functions(mut code: TokenStream) -> TokenStream {
-    let interface_names = protocol.items.iter().filter_map(|item| match item {
+    let interface_names = PROTOCOL.items.iter().filter_map(|item| match item {
         ProtocolChild::Interface(interface) => {
             let interface_name = Ident::new(
                 &format!("{}", interface.name.to_camel_case()),
@@ -210,7 +210,7 @@ fn generate_get_wayland_object_functions(mut code: TokenStream) -> TokenStream {
         }
         _ => None,
     });
-    let impl_wl_raw_obj = protocol.items.iter().filter_map(|item| match item {
+    let impl_wl_raw_obj = PROTOCOL.items.iter().filter_map(|item| match item {
         ProtocolChild::Interface(interface) => {
             let interface_name = Ident::new(
                 &format!("{}", interface.name.to_camel_case()),
@@ -232,7 +232,7 @@ fn generate_get_wayland_object_functions(mut code: TokenStream) -> TokenStream {
         }
         _ => None,
     });
-    let impl_wl_get_obj = protocol.items.iter().filter_map(|item| match item {
+    let impl_wl_get_obj = PROTOCOL.items.iter().filter_map(|item| match item {
         ProtocolChild::Interface(interface) => {
             let interface_name = Ident::new(
                 &format!("{}", interface.name.to_camel_case()),
@@ -273,7 +273,7 @@ fn generate_get_wayland_object_functions(mut code: TokenStream) -> TokenStream {
 
 fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> TokenStream {
     let mut predefine_event_structs = quote! {};
-    for item in protocol.items.iter() {
+    for item in PROTOCOL.items.iter() {
         match item {
             ProtocolChild::Interface(interface) => {
                 for child in interface.items.iter() {
@@ -312,7 +312,7 @@ fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> Toke
             _ => {}
         }
     }
-    let interface_event_enums = protocol.items.iter().filter_map(|item| match item {
+    let interface_event_enums = PROTOCOL.items.iter().filter_map(|item| match item {
         ProtocolChild::Interface(interface) => {
             let interface_event_name = Ident::new(
                 &format!("{}Event", interface.name.to_camel_case()),
@@ -341,7 +341,7 @@ fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> Toke
         }
         _ => None,
     });
-    let interface_event_names = protocol.items.iter().filter_map(|item| match item {
+    let interface_event_names = PROTOCOL.items.iter().filter_map(|item| match item {
         ProtocolChild::Interface(interface) => {
             let interface_event_name = Ident::new(
                 &format!("{}Event", interface.name.to_camel_case()),
@@ -429,7 +429,7 @@ fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> Toke
         }
     };
 
-    let parse_event_for_every_interface = protocol.items.iter().filter_map(|item| match item {
+    let parse_event_for_every_interface = PROTOCOL.items.iter().filter_map(|item| match item {
         ProtocolChild::Interface(interface) => {
             let interface_name_str = format!("{}", interface.name.to_camel_case());
             let event_interface_name_str = format!("{}Event", interface.name.to_camel_case());
@@ -567,7 +567,7 @@ fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> Toke
 }
 
 pub fn generate_wayland_protocol_code() -> String {
-    let protocol = wayland_protocol_scanner::parse_wayland_protocol();
+    let PROTOCOL = wayland_protocol_scanner::parse_wayland_protocol();
 
     // Required USE
     let mut code = quote! {
