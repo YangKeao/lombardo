@@ -8,32 +8,14 @@ extern crate quote;
 
 use heck::{CamelCase, SnakeCase};
 use proc_macro2::{Ident, Span, TokenStream};
-use wayland_protocol_scanner::EventOrRequestField;
+use wayland_protocol_scanner::{EventOrRequestField, Protocol};
 use wayland_protocol_scanner::InterfaceChild;
 use wayland_protocol_scanner::ProtocolChild;
+use syn::export::TokenStream2;
 
-pub fn generate_wayland_protocol_code() -> String {
-    let protocol = wayland_protocol_scanner::parse_wayland_protocol();
+const protocol: Protocol = wayland_protocol_scanner::parse_wayland_protocol();
 
-    // Required USE
-    let mut code = quote! {
-        use super::socket::*;
-        use crate::unix_socket::UnixSocket;
-        use std::sync::Arc;
-        use std::mem::transmute;
-        use std::mem::size_of;
-        use std::io::Read;
-
-        type NewId=u32;
-        type Uint=u32;
-        type Int=i32;
-        type Fd=i32;
-        type Object=u32;
-        type Fixed=f32; // TODO: handle fixed value
-        type Array=Vec<u32>;
-    };
-
-    // Generate Traits
+fn generate_traits(mut code: TokenStream) -> TokenStream {
     for item in &protocol.items {
         match item {
             ProtocolChild::Interface(interface) => {
@@ -77,9 +59,11 @@ pub fn generate_wayland_protocol_code() -> String {
             }
             _ => {}
         }
-    }
+    };
+    return code;
+}
 
-    // Generate Request interface structs and functions.
+fn generate_req_interface_structs_and_functions(mut code: TokenStream) -> TokenStream {
     for item in &protocol.items {
         match item {
             ProtocolChild::Interface(interface) => {
@@ -212,7 +196,10 @@ pub fn generate_wayland_protocol_code() -> String {
             _ => {}
         }
     }
+    return code;
+}
 
+fn generate_get_wayland_object_functions(mut code: TokenStream) -> TokenStream {
     let interface_names = protocol.items.iter().filter_map(|item| match item {
         ProtocolChild::Interface(interface) => {
             let interface_name = Ident::new(
@@ -281,8 +268,10 @@ pub fn generate_wayland_protocol_code() -> String {
         }
         #(#impl_wl_raw_obj)*
     };
+    return code;
+}
 
-    // Generate Event interface structs and functions.
+fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> TokenStream {
     let mut predefine_event_structs = quote! {};
     for item in protocol.items.iter() {
         match item {
@@ -574,5 +563,33 @@ pub fn generate_wayland_protocol_code() -> String {
             }
         }
     };
+    return code;
+}
+pub fn generate_wayland_protocol_code() -> String {
+    let protocol = wayland_protocol_scanner::parse_wayland_protocol();
+
+    // Required USE
+    let mut code = quote! {
+        use super::socket::*;
+        use crate::unix_socket::UnixSocket;
+        use std::sync::Arc;
+        use std::mem::transmute;
+        use std::mem::size_of;
+        use std::io::Read;
+
+        type NewId=u32;
+        type Uint=u32;
+        type Int=i32;
+        type Fd=i32;
+        type Object=u32;
+        type Fixed=f32; // TODO: handle fixed value
+        type Array=Vec<u32>;
+    };
+
+    code = generate_traits(code);
+    code = generate_req_interface_structs_and_functions(code);
+    code = generate_get_wayland_object_functions(code);
+    code = generate_event_interface_structs_and_functions(code);
+
     return code.to_string();
 }
