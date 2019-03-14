@@ -92,18 +92,12 @@ fn add_arg_size(arg: &wayland_protocol_scanner::Arg) -> Option<TokenStream> {
     let arg_name = ident!("{}",arg.name; None);
     let arg_typ = ident!("{}", &arg.typ; Some(Case::CamelCase));
     match &arg.typ[..] {
-        "String" => {
-            Some(quote! {
-                raw_size += ((#arg_name.len() + 1) as f64 / 4.0).ceil() as usize * 4 + 4;
-            })
-        }
-        "Fd" => {
-            None
-        }
+        "String" => Some(quote! {
+            raw_size += ((#arg_name.len() + 1) as f64 / 4.0).ceil() as usize * 4 + 4;
+        }),
+        "Fd" => None,
         // TODO: Array and other types
-        _ => {
-            Some(quote! {raw_size += size_of::<#arg_typ>();})
-        }
+        _ => Some(quote! {raw_size += size_of::<#arg_typ>();}),
     }
 }
 
@@ -111,35 +105,29 @@ fn send_arg(arg: &wayland_protocol_scanner::Arg) -> Option<TokenStream> {
     let arg_name = ident!("{}",arg.name; None);
     let arg_typ = ident!("{}", &arg.typ; Some(Case::CamelCase));
     match &arg.typ.to_camel_case()[..] {
-        "String" => {
-            Some(quote! {
-                let str_len = #arg_name.len();
-                let buf_len = ((#arg_name.len() + 1) as f64 / 4.0).ceil() as usize * 4;
-                unsafe {
-                    std::ptr::copy(&buf_len as *const usize as *const u8, &mut send_buffer[written_len] as *mut u8, str_len + 1);
-                    std::ptr::copy(&#arg_name.into_bytes()[0] as *const u8, &mut send_buffer[written_len + 4] as *mut u8, str_len);
-                }
-                #[allow(unused)]
-                written_len += buf_len + 4;
-            })
-        }
-        "Fd" => {
-            Some(quote! {
-                info!("Send FD: {}", #arg_name);
-                send_fd[send_fd_num] = #arg_name;
-                send_fd_num += 1;
-            })
-        }
+        "String" => Some(quote! {
+            let str_len = #arg_name.len();
+            let buf_len = ((#arg_name.len() + 1) as f64 / 4.0).ceil() as usize * 4;
+            unsafe {
+                std::ptr::copy(&buf_len as *const usize as *const u8, &mut send_buffer[written_len] as *mut u8, str_len + 1);
+                std::ptr::copy(&#arg_name.into_bytes()[0] as *const u8, &mut send_buffer[written_len + 4] as *mut u8, str_len);
+            }
+            #[allow(unused)]
+            written_len += buf_len + 4;
+        }),
+        "Fd" => Some(quote! {
+            info!("Send FD: {}", #arg_name);
+            send_fd[send_fd_num] = #arg_name;
+            send_fd_num += 1;
+        }),
         // TODO: Array and other types
-        _ => {
-            Some(quote! {
-                unsafe {
-                    std::ptr::copy(&#arg_name as *const #arg_typ, &mut send_buffer[written_len] as *mut u8 as *mut #arg_typ, 1);
-                }
-                #[allow(unused)]
-                written_len += size_of::<u32>();
-            })
-        }
+        _ => Some(quote! {
+            unsafe {
+                std::ptr::copy(&#arg_name as *const #arg_typ, &mut send_buffer[written_len] as *mut u8 as *mut #arg_typ, 1);
+            }
+            #[allow(unused)]
+            written_len += size_of::<u32>();
+        }),
     }
 }
 
@@ -291,80 +279,75 @@ fn parse_args(arg: &wayland_protocol_scanner::Arg) -> Option<TokenStream> {
     let arg_name = ident!("{}", arg.name; Some(Case::SnakeCase));
     let arg_typ = ident!("{}", arg.typ; Some(Case::CamelCase));
     match &arg.typ[..] {
-        "fixed" => {
-            Some(quote! {
-                let #arg_name: f32 = 0.0;
-                warn!("Fixed value has not been implemented");
-            })
-        }
-        "string" => {
-            Some(quote! {
-                parsed_len += size_of::<u32>();
-                let start = parsed_len - size_of::<u32>();
+        "fixed" => Some(quote! {
+            let #arg_name: f32 = 0.0;
+            warn!("Fixed value has not been implemented");
+        }),
+        "string" => Some(quote! {
+            parsed_len += size_of::<u32>();
+            let start = parsed_len - size_of::<u32>();
 
-                let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const u32;
-                let str_len = unsafe{
-                    *raw_ptr
-                };
-                let str_len = (str_len as f64 / 4.0).ceil() as usize * 4;
-                parsed_len += str_len;
+            let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const u32;
+            let str_len = unsafe{
+                *raw_ptr
+            };
+            let str_len = (str_len as f64 / 4.0).ceil() as usize * 4;
+            parsed_len += str_len;
 
-                let src_ptr = msg_body[(start + size_of::<u32>())..parsed_len].as_ptr();
-                let mut tmp_ptr = Vec::with_capacity(str_len);
-                unsafe {
-                    tmp_ptr.set_len(str_len);
-                    std::ptr::copy(src_ptr, tmp_ptr.as_mut_ptr(), str_len);
-                };
-                let #arg_name = std::str::from_utf8(&tmp_ptr).unwrap().trim_matches('\0').to_string();
-            })
-        }
-        "array" => {
-            Some(quote! {
-                let #arg_name: Vec<u32> = Vec::new();
-                warn!("Array value has not been implemented");
-            })
-        }
-        _ => {
-            Some(quote! {
-                parsed_len += size_of::<#arg_typ>();
-                let start = parsed_len - size_of::<#arg_typ>();
+            let src_ptr = msg_body[(start + size_of::<u32>())..parsed_len].as_ptr();
+            let mut tmp_ptr = Vec::with_capacity(str_len);
+            unsafe {
+                tmp_ptr.set_len(str_len);
+                std::ptr::copy(src_ptr, tmp_ptr.as_mut_ptr(), str_len);
+            };
+            let #arg_name = std::str::from_utf8(&tmp_ptr).unwrap().trim_matches('\0').to_string();
+        }),
+        "array" => Some(quote! {
+            let #arg_name: Vec<u32> = Vec::new();
+            warn!("Array value has not been implemented");
+        }),
+        _ => Some(quote! {
+            parsed_len += size_of::<#arg_typ>();
+            let start = parsed_len - size_of::<#arg_typ>();
 
-                let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const #arg_typ;
-                let #arg_name = unsafe{
-                    *raw_ptr
-                };
-            })
-        }
+            let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const #arg_typ;
+            let #arg_name = unsafe{
+                *raw_ptr
+            };
+        }),
     }
 }
 
 fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> TokenStream {
-    let mut predefine_event_structs = quote! {};
-    for item in PROTOCOL.items.iter() {
-        match item {
+    let predefine_event_structs = PROTOCOL
+        .items
+        .iter()
+        .filter_map(|item| match item {
             ProtocolChild::Interface(interface) => {
-                for child in interface.items.iter() {
-                    match child {
-                        InterfaceChild::Event(ev) => {
-                            let interface_event_name =
-                                ident!("{}{}Event", interface.name, ev.name; Some(Case::CamelCase));
-                            let event_fields = generate_arguments!(ev);
-                            predefine_event_structs = quote! {
-                                #predefine_event_structs
-                                pub struct #interface_event_name {
-                                    #[allow(dead_code)]
-                                    pub sender_id: u32,
-                                    #(#[allow(dead_code)]pub #event_fields),*
-                                }
+                Some(interface.items.iter().filter_map(move |child| match child {
+                    InterfaceChild::Event(ev) => {
+                        let interface_event_name =
+                            ident!("{}{}Event", interface.name, ev.name; Some(Case::CamelCase));
+                        let event_fields = generate_arguments!(ev);
+                        Some(quote! {
+                            pub struct #interface_event_name {
+                                #[allow(dead_code)]
+                                pub sender_id: u32,
+                                #(#[allow(dead_code)]pub #event_fields),*
                             }
-                        }
-                        _ => {}
+                        })
                     }
-                }
+                    _ => None,
+                }))
             }
-            _ => {}
-        }
-    }
+            _ => None,
+        })
+        .fold(quote! {}, |codes, x| {
+            quote! {
+                #codes
+                #(#x)*
+            }
+        });
     let interface_event_enums = PROTOCOL.items.iter().filter_map(|item| match item {
         ProtocolChild::Interface(interface) => {
             let interface_event_name = ident!("{}Event", interface.name; Some(Case::CamelCase));
@@ -480,46 +463,46 @@ fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> Toke
             let event_interface_name = ident!("{}Event", interface.name; Some(Case::CamelCase));
 
             let mut op_code: u16 = 0;
-            let parse_event_for_every_op_code = interface.items.iter().filter_map(|child| match child {
-                InterfaceChild::Event(ev) => {
-                    op_code += 1;
-                    let true_op_code =op_code - 1;
+            let parse_event_for_every_op_code =
+                interface.items.iter().filter_map(|child| match child {
+                    InterfaceChild::Event(ev) => {
+                        op_code += 1;
+                        let true_op_code = op_code - 1;
 
-                    let ev_name_str = format!("{}{}Event", interface.name.to_camel_case(), ev.name.to_camel_case());
-                    let ev_name = ident!("{}{}Event", interface.name, ev.name; Some(Case::CamelCase));
-                    let parse_args = ev.items.iter().filter_map(|field| {
-                        match field {
-                            EventOrRequestField::Arg(arg) => {
-                                parse_args(arg)
-                            }
-                            _ => None
-                        }
-                    });
-                    let arg_names = ev.items.iter().filter_map(|field| {
-                        match field {
+                        let ev_name_str = format!(
+                            "{}{}Event",
+                            interface.name.to_camel_case(),
+                            ev.name.to_camel_case()
+                        );
+                        let ev_name =
+                            ident!("{}{}Event", interface.name, ev.name; Some(Case::CamelCase));
+                        let parse_args = ev.items.iter().filter_map(|field| match field {
+                            EventOrRequestField::Arg(arg) => parse_args(arg),
+                            _ => None,
+                        });
+                        let arg_names = ev.items.iter().filter_map(|field| match field {
                             EventOrRequestField::Arg(arg) => {
                                 let arg_name = ident!("{}", arg.name; Some(Case::SnakeCase));
                                 Some(quote! {#arg_name})
                             }
-                            _ => None
-                        }
-                    });
-                    Some(quote! {
-                        #true_op_code => {
-                            info!("Receive event {}", #ev_name_str);
+                            _ => None,
+                        });
+                        Some(quote! {
+                            #true_op_code => {
+                                info!("Receive event {}", #ev_name_str);
 
-                            #[allow(unused)]
-                            let mut parsed_len: usize = 0;
-                            #(#parse_args)*
-                            #event_interface_name::#ev_name(#ev_name {
-                                sender_id,
-                                #(#arg_names),*
-                            })
-                        }
-                    })
-                }
-                _ => None
-            });
+                                #[allow(unused)]
+                                let mut parsed_len: usize = 0;
+                                #(#parse_args)*
+                                #event_interface_name::#ev_name(#ev_name {
+                                    sender_id,
+                                    #(#arg_names),*
+                                })
+                            }
+                        })
+                    }
+                    _ => None,
+                });
             Some(quote! {
                 WlObject::#interface_name(_obj) => {
                     Event::#event_interface_name(match op_code {
