@@ -287,6 +287,57 @@ fn generate_get_wayland_object_functions(mut code: TokenStream) -> TokenStream {
     return code;
 }
 
+fn parse_args(arg: &wayland_protocol_scanner::Arg) -> Option<TokenStream> {
+    let arg_name = ident!("{}", arg.name; Some(Case::SnakeCase));
+    let arg_typ = ident!("{}", arg.typ; Some(Case::CamelCase));
+    match &arg.typ[..] {
+        "fixed" => {
+            Some(quote! {
+                let #arg_name: f32 = 0.0;
+                warn!("Fixed value has not been implemented");
+            })
+        }
+        "string" => {
+            Some(quote! {
+                parsed_len += size_of::<u32>();
+                let start = parsed_len - size_of::<u32>();
+
+                let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const u32;
+                let str_len = unsafe{
+                    *raw_ptr
+                };
+                let str_len = (str_len as f64 / 4.0).ceil() as usize * 4;
+                parsed_len += str_len;
+
+                let src_ptr = msg_body[(start + size_of::<u32>())..parsed_len].as_ptr();
+                let mut tmp_ptr = Vec::with_capacity(str_len);
+                unsafe {
+                    tmp_ptr.set_len(str_len);
+                    std::ptr::copy(src_ptr, tmp_ptr.as_mut_ptr(), str_len);
+                };
+                let #arg_name = std::str::from_utf8(&tmp_ptr).unwrap().trim_matches('\0').to_string();
+            })
+        }
+        "array" => {
+            Some(quote! {
+                let #arg_name: Vec<u32> = Vec::new();
+                warn!("Array value has not been implemented");
+            })
+        }
+        _ => {
+            Some(quote! {
+                parsed_len += size_of::<#arg_typ>();
+                let start = parsed_len - size_of::<#arg_typ>();
+
+                let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const #arg_typ;
+                let #arg_name = unsafe{
+                    *raw_ptr
+                };
+            })
+        }
+    }
+}
+
 fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> TokenStream {
     let mut predefine_event_structs = quote! {};
     for item in PROTOCOL.items.iter() {
@@ -439,54 +490,7 @@ fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> Toke
                     let parse_args = ev.items.iter().filter_map(|field| {
                         match field {
                             EventOrRequestField::Arg(arg) => {
-                                let arg_name = ident!("{}", arg.name; Some(Case::SnakeCase));
-                                let arg_typ = ident!("{}", arg.typ; Some(Case::CamelCase));
-                                match &arg.typ[..] {
-                                    "fixed" => {
-                                        Some(quote! {
-                                            let #arg_name: f32 = 0.0;
-                                            warn!("Fixed value has not been implemented");
-                                        })
-                                    }
-                                    "string" => {
-                                        Some(quote! {
-                                            parsed_len += size_of::<u32>();
-                                            let start = parsed_len - size_of::<u32>();
-
-                                            let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const u32;
-                                            let str_len = unsafe{
-                                                *raw_ptr
-                                            };
-                                            let str_len = (str_len as f64 / 4.0).ceil() as usize * 4;
-                                            parsed_len += str_len;
-
-                                            let src_ptr = msg_body[(start + size_of::<u32>())..parsed_len].as_ptr();
-                                            let mut tmp_ptr = Vec::with_capacity(str_len);
-                                            unsafe {
-                                                tmp_ptr.set_len(str_len);
-                                                std::ptr::copy(src_ptr, tmp_ptr.as_mut_ptr(), str_len);
-                                            };
-                                            let #arg_name = std::str::from_utf8(&tmp_ptr).unwrap().trim_matches('\0').to_string();
-                                        })
-                                    }
-                                    "array" => {
-                                        Some(quote! {
-                                            let #arg_name: Vec<u32> = Vec::new();
-                                            warn!("Array value has not been implemented");
-                                        })
-                                    }
-                                    _ => {
-                                        Some(quote! {
-                                            parsed_len += size_of::<#arg_typ>();
-                                            let start = parsed_len - size_of::<#arg_typ>();
-
-                                            let raw_ptr = msg_body[start..parsed_len].as_ptr() as *const #arg_typ;
-                                            let #arg_name = unsafe{
-                                                *raw_ptr
-                                            };
-                                        })
-                                    }
-                                }
+                                parse_args(arg)
                             }
                             _ => None
                         }
