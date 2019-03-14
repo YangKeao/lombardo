@@ -62,8 +62,8 @@ macro_rules! generate_arguments {
     }
 }
 
-fn generate_traits(code: TokenStream) -> TokenStream {
-    let traits = PROTOCOL.items.iter().filter_map(|child| match child {
+fn generate_traits() -> TokenStream {
+    PROTOCOL.items.iter().filter_map(|child| match child {
         ProtocolChild::Interface(interface) => {
             let functions = interface.items.iter().filter_map(|msg| match msg {
                 InterfaceChild::Request(req) => {
@@ -84,11 +84,7 @@ fn generate_traits(code: TokenStream) -> TokenStream {
     }).fold(quote!{}, |codes, x| quote!{
         #codes
         #x
-    });
-    quote! {
-        #code
-        #traits
-    }
+    })
 }
 
 fn add_arg_size(arg: &wayland_protocol_scanner::Arg) -> Option<TokenStream> {
@@ -134,91 +130,90 @@ fn send_arg(arg: &wayland_protocol_scanner::Arg) -> Option<TokenStream> {
     }
 }
 
-fn generate_req_interface_structs_and_functions(mut code: TokenStream) -> TokenStream {
-    for item in &PROTOCOL.items {
-        match item {
-            ProtocolChild::Interface(interface) => {
-                let struct_name = ident!("{}", interface.name; Some(Case::CamelCase));
-                let interface_name = ident!("I{}", interface.name; Some(Case::CamelCase));
-                let mut req_op_code_count: u16 = 0;
-                let functions = interface.items.iter().filter_map(|msg| {
-                    match msg {
-                        InterfaceChild::Request(req) => {
-                            let args = generate_arguments!(req);
-                            let function_name = ident!("{}", &req.name; None);
+fn generate_req_interface_structs_and_functions() -> TokenStream {
+    PROTOCOL.items.iter().filter_map(|item| match item {
+        ProtocolChild::Interface(interface) => {
+            let struct_name = ident!("{}", interface.name; Some(Case::CamelCase));
+            let interface_name = ident!("I{}", interface.name; Some(Case::CamelCase));
+            let mut req_op_code_count: u16 = 0;
+            let functions = interface.items.iter().filter_map(|msg| {
+                match msg {
+                    InterfaceChild::Request(req) => {
+                        let args = generate_arguments!(req);
+                        let function_name = ident!("{}", &req.name; None);
 
-                            req_op_code_count += 1;
-                            let op_code = req_op_code_count - 1;
-                            let add_raw_size = req.items.iter().filter_map(|child| {
-                                match child {
-                                    EventOrRequestField::Arg(arg) => {
-                                        add_arg_size(arg)
-                                    }
-                                    _ => { None }
+                        req_op_code_count += 1;
+                        let op_code = req_op_code_count - 1;
+                        let add_raw_size = req.items.iter().filter_map(|child| {
+                            match child {
+                                EventOrRequestField::Arg(arg) => {
+                                    add_arg_size(arg)
                                 }
-                            });
+                                _ => { None }
+                            }
+                        });
 
-                            let send_args = req.items.iter().filter_map(|child| {
-                                match child {
-                                    EventOrRequestField::Arg(arg) => {
-                                        send_arg(arg)
-                                    }
-                                    _ => { None }
+                        let send_args = req.items.iter().filter_map(|child| {
+                            match child {
+                                EventOrRequestField::Arg(arg) => {
+                                    send_arg(arg)
                                 }
-                            });
+                                _ => { None }
+                            }
+                        });
 
-                            Some(quote! {
-                                fn #function_name(&self, #(#args),*) {
-                                    #[allow(unused)]
-                                    let mut raw_size = 8;
-                                    #(#add_raw_size)*
-                                    let mut send_buffer: Vec<u8> = vec![0; raw_size];
-                                    let mut send_fd = vec![0; 16];
+                        Some(quote! {
+                            fn #function_name(&self, #(#args),*) {
+                                #[allow(unused)]
+                                let mut raw_size = 8;
+                                #(#add_raw_size)*
+                                let mut send_buffer: Vec<u8> = vec![0; raw_size];
+                                let mut send_fd = vec![0; 16];
 
-                                    #[allow(unused)]
-                                    let mut send_fd_num = 0;
-                                    unsafe {
-                                        std::ptr::copy(&self.object_id as *const u32, &mut send_buffer[0] as *mut u8 as *mut u32, 1);
-                                        let op_code_and_length: u32 = ((raw_size as u32) << 16) + (#op_code as u32);
-                                        std::ptr::copy(&op_code_and_length as *const u32, &mut send_buffer[size_of::<u32>()] as *mut u8 as *mut u32, 1);
-                                    }
-
-                                    #[allow(unused)]
-                                    let mut written_len: usize = 8;
-                                    #(#send_args)*
-                                    unsafe {
-                                        send_fd.set_len(send_fd_num);
-                                    }
-                                    self.socket.send(&send_buffer, &send_fd);
+                                #[allow(unused)]
+                                let mut send_fd_num = 0;
+                                unsafe {
+                                    std::ptr::copy(&self.object_id as *const u32, &mut send_buffer[0] as *mut u8 as *mut u32, 1);
+                                    let op_code_and_length: u32 = ((raw_size as u32) << 16) + (#op_code as u32);
+                                    std::ptr::copy(&op_code_and_length as *const u32, &mut send_buffer[size_of::<u32>()] as *mut u8 as *mut u32, 1);
                                 }
-                            })
-                        }
-                        InterfaceChild::Event(_ev) => { None }
-                        InterfaceChild::Enum(_en) => { None }
-                        _ => { None }
+
+                                #[allow(unused)]
+                                let mut written_len: usize = 8;
+                                #(#send_args)*
+                                unsafe {
+                                    send_fd.set_len(send_fd_num);
+                                }
+                                self.socket.send(&send_buffer, &send_fd);
+                            }
+                        })
                     }
-                });
-                code = quote! {
-                    #code
-                    #[derive(Clone)]
-                    pub struct #struct_name {
-                        #[allow(dead_code)]
-                        pub object_id: u32,
-                        #[allow(dead_code)]
-                        pub socket: Arc<WaylandSocket>,
-                    }
-                    impl #interface_name for #struct_name {
-                        #(#functions)*
-                    }
-                };
-            }
-            _ => {}
+                    InterfaceChild::Event(_ev) => { None }
+                    InterfaceChild::Enum(_en) => { None }
+                    _ => { None }
+                }
+            });
+            Some(quote! {
+                #[derive(Clone)]
+                pub struct #struct_name {
+                    #[allow(dead_code)]
+                    pub object_id: u32,
+                    #[allow(dead_code)]
+                    pub socket: Arc<WaylandSocket>,
+                }
+                impl #interface_name for #struct_name {
+                    #(#functions)*
+                }
+            })
         }
-    }
-    return code;
+        _ => None
+    }).fold(quote!{}, |codes, x| quote! {
+        #codes
+        #x
+    })
 }
 
-fn generate_get_wayland_object_functions(mut code: TokenStream) -> TokenStream {
+fn generate_get_wayland_object_functions() -> TokenStream {
     let interface_names = PROTOCOL.items.iter().filter_map(|item| match item {
         ProtocolChild::Interface(interface) => {
             let interface_name = ident!("{}", interface.name; Some(Case::CamelCase));
@@ -261,8 +256,7 @@ fn generate_get_wayland_object_functions(mut code: TokenStream) -> TokenStream {
         }
         _ => None,
     });
-    code = quote! {
-        #code
+    quote! {
         pub trait WlRawObject {
             fn new(object_id: u32, socket: Arc<WaylandSocket>) -> Self;
             fn to_enum(self) -> WlObject ;
@@ -274,8 +268,7 @@ fn generate_get_wayland_object_functions(mut code: TokenStream) -> TokenStream {
             #(#impl_wl_get_obj)*
         }
         #(#impl_wl_raw_obj)*
-    };
-    return code;
+    }
 }
 
 fn parse_args(arg: &wayland_protocol_scanner::Arg) -> Option<TokenStream> {
@@ -321,7 +314,7 @@ fn parse_args(arg: &wayland_protocol_scanner::Arg) -> Option<TokenStream> {
     }
 }
 
-fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> TokenStream {
+fn generate_event_interface_structs_and_functions() -> TokenStream {
     let predefine_event_structs = PROTOCOL
         .items
         .iter()
@@ -384,8 +377,68 @@ fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> Toke
         }
         _ => None,
     });
-    code = quote! {
-        #code
+
+    let parse_event_for_every_interface = PROTOCOL.items.iter().filter_map(|item| match item {
+        ProtocolChild::Interface(interface) => {
+            let interface_name = ident!("{}", interface.name; Some(Case::CamelCase));
+            let event_interface_name = ident!("{}Event", interface.name; Some(Case::CamelCase));
+
+            let mut op_code: u16 = 0;
+            let parse_event_for_every_op_code =
+                interface.items.iter().filter_map(|child| match child {
+                    InterfaceChild::Event(ev) => {
+                        op_code += 1;
+                        let true_op_code = op_code - 1;
+
+                        let ev_name_str = format!(
+                            "{}{}Event",
+                            interface.name.to_camel_case(),
+                            ev.name.to_camel_case()
+                        );
+                        let ev_name =
+                            ident!("{}{}Event", interface.name, ev.name; Some(Case::CamelCase));
+                        let parse_args = ev.items.iter().filter_map(|field| match field {
+                            EventOrRequestField::Arg(arg) => parse_args(arg),
+                            _ => None,
+                        });
+                        let arg_names = ev.items.iter().filter_map(|field| match field {
+                            EventOrRequestField::Arg(arg) => {
+                                let arg_name = ident!("{}", arg.name; Some(Case::SnakeCase));
+                                Some(quote! {#arg_name})
+                            }
+                            _ => None,
+                        });
+                        Some(quote! {
+                            #true_op_code => {
+                                info!("Receive event {}", #ev_name_str);
+
+                                #[allow(unused)]
+                                let mut parsed_len: usize = 0;
+                                #(#parse_args)*
+                                #event_interface_name::#ev_name(#ev_name {
+                                    sender_id,
+                                    #(#arg_names),*
+                                })
+                            }
+                        })
+                    }
+                    _ => None,
+                });
+            Some(quote! {
+                WlObject::#interface_name(_obj) => {
+                    Event::#event_interface_name(match op_code {
+                        #(#parse_event_for_every_op_code)*
+                        _ => {
+                            warn!("No such op_code");
+                            #event_interface_name::None
+                        }
+                    })
+                }
+            })
+        }
+        _ => None,
+    });
+    quote! {
         #predefine_event_structs
         #(#[allow(dead_code)]pub #interface_event_enums)*
         pub enum Event {
@@ -458,70 +511,6 @@ fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> Toke
                 return ret_value;
             }
         }
-    };
-
-    let parse_event_for_every_interface = PROTOCOL.items.iter().filter_map(|item| match item {
-        ProtocolChild::Interface(interface) => {
-            let interface_name = ident!("{}", interface.name; Some(Case::CamelCase));
-            let event_interface_name = ident!("{}Event", interface.name; Some(Case::CamelCase));
-
-            let mut op_code: u16 = 0;
-            let parse_event_for_every_op_code =
-                interface.items.iter().filter_map(|child| match child {
-                    InterfaceChild::Event(ev) => {
-                        op_code += 1;
-                        let true_op_code = op_code - 1;
-
-                        let ev_name_str = format!(
-                            "{}{}Event",
-                            interface.name.to_camel_case(),
-                            ev.name.to_camel_case()
-                        );
-                        let ev_name =
-                            ident!("{}{}Event", interface.name, ev.name; Some(Case::CamelCase));
-                        let parse_args = ev.items.iter().filter_map(|field| match field {
-                            EventOrRequestField::Arg(arg) => parse_args(arg),
-                            _ => None,
-                        });
-                        let arg_names = ev.items.iter().filter_map(|field| match field {
-                            EventOrRequestField::Arg(arg) => {
-                                let arg_name = ident!("{}", arg.name; Some(Case::SnakeCase));
-                                Some(quote! {#arg_name})
-                            }
-                            _ => None,
-                        });
-                        Some(quote! {
-                            #true_op_code => {
-                                info!("Receive event {}", #ev_name_str);
-
-                                #[allow(unused)]
-                                let mut parsed_len: usize = 0;
-                                #(#parse_args)*
-                                #event_interface_name::#ev_name(#ev_name {
-                                    sender_id,
-                                    #(#arg_names),*
-                                })
-                            }
-                        })
-                    }
-                    _ => None,
-                });
-            Some(quote! {
-                WlObject::#interface_name(_obj) => {
-                    Event::#event_interface_name(match op_code {
-                        #(#parse_event_for_every_op_code)*
-                        _ => {
-                            warn!("No such op_code");
-                            #event_interface_name::None
-                        }
-                    })
-                }
-            })
-        }
-        _ => None,
-    });
-    code = quote! {
-        #code
         impl WlObject {
             pub fn parse_event(&self, sender_id: u32, op_code: u16, msg_body: Vec<u8>) -> Event {
                 match self {
@@ -529,13 +518,16 @@ fn generate_event_interface_structs_and_functions(mut code: TokenStream) -> Toke
                 }
             }
         }
-    };
-    return code;
+    }
 }
 
 pub fn generate_wayland_protocol_code() -> String {
+    let traits = generate_traits();
+    let req_interface_structs_and_functions = generate_req_interface_structs_and_functions();
+    let wayland_object_functions = generate_get_wayland_object_functions();
+    let event_interface_structs_and_functions = generate_event_interface_structs_and_functions();
     // Required USE
-    let mut code = quote! {
+    let code = quote! {
         use super::socket::*;
         use crate::unix_socket::UnixSocket;
         use std::sync::Arc;
@@ -549,12 +541,12 @@ pub fn generate_wayland_protocol_code() -> String {
         type Object=u32;
         type Fixed=f32; // TODO: handle fixed value
         type Array=Vec<u32>;
-    };
 
-    code = generate_traits(code);
-    code = generate_req_interface_structs_and_functions(code);
-    code = generate_get_wayland_object_functions(code);
-    code = generate_event_interface_structs_and_functions(code);
+        #traits
+        #req_interface_structs_and_functions
+        #wayland_object_functions
+        #event_interface_structs_and_functions
+    };
 
     return code.to_string();
 }
