@@ -63,28 +63,34 @@ macro_rules! generate_arguments {
 }
 
 fn generate_traits() -> TokenStream {
-    PROTOCOL.items.iter().filter_map(|child| match child {
-        ProtocolChild::Interface(interface) => {
-            let functions = interface.items.iter().filter_map(|msg| match msg {
-                InterfaceChild::Request(req) => {
-                    let args = generate_arguments!(req);
-                    let function_name = ident!("{}", req.name; None);
-                    return Some(quote! {fn #function_name(&self, #(#args),*);});
-                }
-                _ => None,
-            });
-            let interface_name = ident!("I{}", interface.name; Some(Case::CamelCase));
-            Some(quote! {
-                pub trait #interface_name {
-                    #(#functions)*
-                }
-            })
-        }
-        _ => None
-    }).fold(quote!{}, |codes, x| quote!{
-        #codes
-        #x
-    })
+    PROTOCOL
+        .items
+        .iter()
+        .filter_map(|child| match child {
+            ProtocolChild::Interface(interface) => {
+                let functions = interface.items.iter().filter_map(|msg| match msg {
+                    InterfaceChild::Request(req) => {
+                        let args = generate_arguments!(req);
+                        let function_name = ident!("{}", req.name; None);
+                        return Some(quote! {fn #function_name(&self, #(#args),*);});
+                    }
+                    _ => None,
+                });
+                let interface_name = ident!("I{}", interface.name; Some(Case::CamelCase));
+                Some(quote! {
+                    pub trait #interface_name {
+                        #(#functions)*
+                    }
+                })
+            }
+            _ => None,
+        })
+        .fold(quote! {}, |codes, x| {
+            quote! {
+                #codes
+                #x
+            }
+        })
 }
 
 fn add_arg_size(arg: &wayland_protocol_scanner::Arg) -> Option<TokenStream> {
