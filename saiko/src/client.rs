@@ -1,7 +1,7 @@
 use super::socket::WaylandSocket;
 use super::wayland;
 use super::wayland::{WlDisplay, WlObject, WlRawObject};
-use crate::wayland::{IwlDisplay, WlCallback};
+use crate::wayland::WlCallback;
 use std::collections::HashMap;
 use std::sync::Mutex;
 use std::sync::{Arc, Condvar, RwLock};

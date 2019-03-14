@@ -115,7 +115,7 @@ fn main() {
         _ => {}
     }));
     let wl_shell = client
-        .get_obj(wl_shell_surface_id)
+        .get_obj(wl_shell_id)
         .unwrap()
         .try_get_wl_shell()
         .unwrap();
